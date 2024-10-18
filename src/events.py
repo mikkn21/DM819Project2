@@ -25,5 +25,11 @@ class EventQueue:
         self.events.add(event)
 
     def pop(self) -> SiteEvent | CircleEvent:
+        """
+        Removes and returns the event with the highest y-coordinate.
+        """
         return self.events.pop()
+
+    def is_empty(self) -> bool:
+        raise NotImplementedError()
 

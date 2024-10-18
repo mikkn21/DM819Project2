@@ -1,11 +1,15 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+import math
 
 @dataclass
 class Point:
     x: float
     y: float
+
+    def is_close_to(self, other: Point, relative_diff: float = 1) -> bool:
+        return math.isclose(self.x, other.x, rel_tol=relative_diff) and math.isclose(self.y, other.y, rel_tol=relative_diff)
 
     def __repr__(self) -> str:
         return f"Point({self.x}, {self.y})"
@@ -14,7 +18,9 @@ class Point:
         return f"Point({self.x}, {self.y})"
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, Point) and (self.x, self.y) == (other.x, other.y)
+        diff = 1
+        return (isinstance(other, Point) and 
+                math.isclose(self.x, other.x, rel_tol=diff) and math.isclose(self.y, other.y, rel_tol=diff))
 
     def __hash__(self) -> int:
         return hash((self.x, self.y))

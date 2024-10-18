@@ -98,17 +98,13 @@ if __name__ == "__main__":
 
     points : list[Point] = []
     query_point_count = 0
-    print("hej mor")
     for line_number, line in enumerate(sys.stdin):
-        line_number = line_number + 1
-
         point = point_pattern.findall(line)
         print(point)
         if len(point) == 0:
             continue # Skip empty lines:
         if len(point) == 2:
             x, y = point
-            print(x, y)
             points.append(Point(float(x), float(y)))
         else:
             print(f"Warning: Incorrect format on line {line_number}: '{line.strip()}'.")
@@ -116,4 +112,4 @@ if __name__ == "__main__":
             print("where x and y are numbers seperate by any delimiter.")
             sys.exit(1) 
 
-    print(points)
+    output = fortunes_algorithm(points)

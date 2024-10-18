@@ -2,15 +2,14 @@
 Doubley Connected Edge List (DCEL) data structure
 """
 from __future__ import annotations
+from dataclasses import dataclass
 
 
-
+@dataclass
 class Vertex:
-    def __init__(self, x : int , y : int, edge: Edge):
-        self.x = x
-        self.y = y
-        self.edge = edge
-
+    x: int
+    y: int
+    edge: Edge
     
     def __str__(self):
         return f"Vertex({self.x}, {self.y})"
@@ -22,14 +21,13 @@ class Vertex:
         return (isinstance(other, Vertex) and 
                 self.x == other.x and self.y == other.y)
     
-
+@dataclass
 class Edge:
-    def __init__(self, origin : Vertex, twin: Edge, face: Face, next: Edge, prev: Edge):
-        self.origin = origin
-        self.twin = twin
-        self.face = face 
-        self.next = next
-        self.prev = prev
+    origin: Vertex
+    twin: Edge
+    face: Face
+    next: Edge
+    prev: Edge
 
     def __str__(self) -> str:
         return f"Edge({self.origin}, {self.next.origin})"
@@ -54,10 +52,9 @@ class Edge:
     # def copy(self) -> Edge:
     #     return Edge(self.origin, self.twin, self.face, self.next, self.prev)
     
-
+@dataclass
 class Face:
-    def __init__(self, component: Edge):
-        self.component = component
+    component: Edge
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Face):
@@ -79,6 +76,14 @@ class Face:
     def _create_superficial_twin_edge(edge: Edge) -> Edge:
         twin_next = Edge(edge.origin, None, None, None, None)
         return Edge(edge.next.origin, edge, None, twin_next, None)
+
+    def set_neighbour(self, neighbor_face: Face, neighbor_edge: Edge) -> None:
+        edge = self.component
+        while edge != neighbor_edge:
+            edge = edge.next
+
+        
+            
     
     def new_from_vertices(vertices: list[Vertex], all_edges: set[Edge]) -> Face:
         """
