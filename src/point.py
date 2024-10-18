@@ -10,6 +10,9 @@ class Point:
     def __repr__(self) -> str:
         return f"Point({self.x}, {self.y})"
 
+    def __str__(self) -> str:
+        return f"Point({self.x}, {self.y})"
+
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Point) and (self.x, self.y) == (other.x, other.y)
 
