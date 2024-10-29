@@ -1,4 +1,5 @@
 
+from __future__ import annotations
 from dataclasses import dataclass
 from sortedcontainers import SortedListWithKey
 from point import Point
@@ -13,9 +14,9 @@ class SiteEvent(Event):
         self.site = site
 
 class CircleEvent(Event):
-    def __init__(self, top_site: Point, circle_bottom_y: float):
+    def __init__(self, middle_leaf, circle_bottom_y: float): # middle_leaf is a Leaf but to avoid circular dependency, it cannot be type hinted
         super().__init__(circle_bottom_y)
-        self.top_site = top_site
+        self.middle_leaf = middle_leaf
 
 class EventQueue:
     def __init__(self, events: list[SiteEvent | CircleEvent] = []):
@@ -29,6 +30,9 @@ class EventQueue:
         Removes and returns the event with the highest y-coordinate.
         """
         return self.events.pop()
+
+    def remove(self, event: SiteEvent | CircleEvent) -> None:
+       self.events.remove(event)
 
     def is_empty(self) -> bool:
         raise NotImplementedError()

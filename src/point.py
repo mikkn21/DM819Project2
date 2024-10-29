@@ -22,6 +22,9 @@ class Point:
         return (isinstance(other, Point) and 
                 math.isclose(self.x, other.x, rel_tol=diff) and math.isclose(self.y, other.y, rel_tol=diff))
 
+    def copy(self) -> Point:
+        return Point(self.x, self.y)
+
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 

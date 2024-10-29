@@ -1,3 +1,4 @@
+import fortunes
 import visualization.dcel_plot as dcel_plot
 from dcel import *
 import re
@@ -112,4 +113,4 @@ if __name__ == "__main__":
             print("where x and y are numbers seperate by any delimiter.")
             sys.exit(1) 
 
-    output = fortunes_algorithm(points)
+    output = fortunes(points)
