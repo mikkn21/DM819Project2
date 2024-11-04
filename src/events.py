@@ -21,19 +21,23 @@ class CircleEvent(Event):
 class EventQueue:
     def __init__(self, events: list[SiteEvent | CircleEvent] = []):
         self.events = SortedListWithKey(events, key = lambda event: event.key)
+        self.size = len(events)
 
     def add(self, event: SiteEvent | CircleEvent) -> None:
         self.events.add(event)
+        self.size += 1
 
     def pop(self) -> SiteEvent | CircleEvent:
         """
         Removes and returns the event with the highest y-coordinate.
         """
+        self.size -= 1
         return self.events.pop()
 
     def remove(self, event: SiteEvent | CircleEvent) -> None:
        self.events.remove(event)
 
     def is_empty(self) -> bool:
-        raise NotImplementedError()
+        return self.size <= 0
+        
 

@@ -1,4 +1,4 @@
-import fortunes
+from fortunes import fortunes
 import visualization.dcel_plot as dcel_plot
 from dcel import *
 import re
@@ -101,7 +101,6 @@ if __name__ == "__main__":
     query_point_count = 0
     for line_number, line in enumerate(sys.stdin):
         point = point_pattern.findall(line)
-        print(point)
         if len(point) == 0:
             continue # Skip empty lines:
         if len(point) == 2:
@@ -114,3 +113,5 @@ if __name__ == "__main__":
             sys.exit(1) 
 
     output = fortunes(points)
+
+    dcel_plot.dcel_plot(output)

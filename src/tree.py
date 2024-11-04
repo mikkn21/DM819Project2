@@ -14,12 +14,15 @@ class Tree:
 
     def add(self, site: Point, sweep_line_y: float) -> None:
         if self.root == None:
-            self.root = Leaf(site) # P: HandleSiteEvent step 1
+            self.root = Leaf(site, None, None) # P: HandleSiteEvent step 1
         else:
             self.root._add(site, sweep_line_y, self.event_queue)
 
-    def find_above(self, x: float) -> Leaf:
-        raise NotImplementedError()
+    def print_tree(self):
+        if self.root is not None:
+            self.root.print_subtree(level=0)
+        else:
+            print("Tree is empty.")
 
 
 @dataclass
@@ -39,13 +42,31 @@ class Node:
             self.right._add(site, event_queue)
     
     def find_breakpoint(self, sweep_line_y: float) -> Point:
-        breakpoint = find_breakpoint(self.arc_points[0], self.arc_points[1], sweep_line_y)
-        self.edge.origin.x = breakpoint.x # TODO: Maybe not necessary
-        self.edge.origin.y = breakpoint.y # TODO: Maybe not necessary
-        return breakpoint
+        breakpoint_left, breakpoint_right = find_breakpoint(self.arc_points[0], self.arc_points[1], sweep_line_y)
+        bp = breakpoint_right if self.arc_points[0].y < self.arc_points[1].y else breakpoint_left
+        self.edge.origin.x = bp.x # TODO: Maybe not necessary
+        self.edge.origin.y = bp.y # TODO: Maybe not necessary
+        return bp 
+
 
     def replace_child(self, cur_child, new_child) -> None:
-        pass
+        """
+        Precondition: cur_child is either self.left or self.right
+        """
+        if self.left == cur_child:
+            self.left = new_child
+        else:
+            self.right = new_child
+    
+
+    
+    def print_subtree(self, level):
+        indent = "  " * level
+        print(f"{indent}Node: arc_points={self.arc_points}")
+        if self.left is not None:
+            self.left.print_subtree(level + 1)
+        if self.right is not None:
+            self.right.print_subtree(level + 1)
 
  
  
@@ -62,7 +83,6 @@ class Leaf:
         if self.circle_event != None:
             event_queue.remove(self.circle_event)
             self.circle_event = None
-            pass
 
         # Step 3:
         # Add subtree for which to replace leaf
@@ -74,9 +94,10 @@ class Leaf:
             edge=None
         )
 
-        # replace the leaf with the root of the subtree
-        self.parent.replace_child(self, node_parent)
-        self.parent = node_parent
+        # replace the leaf with the root of the subtree     
+        if self.parent != None: #TODO: Check if this is works
+            self.parent.replace_child(self, node_parent)
+            self.parent = node_parent
             
         node_left = Node(
             left = None,
@@ -92,12 +113,11 @@ class Leaf:
         node_left.right = site_leaf
         
         # Copy old leaf as it is present twice in the tree
-        copy_self = self.copy()
+        copy_self = Leaf(self.site.copy(), node_left, None)
         node_left.left = copy_self
-        copy_self.parent = node_left
 
         # Step 4: Edges
-        breakpoint = find_breakpoint(node_parent.arc_points[0], node_left.arc_points[1], sweep_line_y)
+        breakpoint = node_parent.find_breakpoint(sweep_line_y)
         node_parent.edge = Edge(breakpoint, None, None, None, None)
         node_left.edge = Edge(breakpoint.copy(), None, None, None, None)
         node_parent.edge.twin = node_left.edge
@@ -118,7 +138,38 @@ class Leaf:
 
     def copy(self) -> Leaf:
         return Leaf(self.site, self.parent, self.circle_event)
+    
+    def next_leaf(self) -> Leaf:
+        """
+        Precondition: self is not the rightmost leaf
+        """
+        node = self
+        while node.parent.right == node:
+            node = node.parent
+        node = self.parent.right
+
+        while not isinstance(node, Leaf):
+            node = node.left
         
+        return node
+        
+    def prev_leaf(self) -> Leaf:
+        """
+        Precondition: self is not the leftmost leaf
+        """
+        node = self
+        while node.parent.left == node:
+            node = node.parent
+        node = self.parent.left
+
+        while not isinstance(node, Leaf):
+            node = node.right
+        
+        return node
+
+    def print_subtree(self, level):
+        indent = "  " * level
+        print(f"{indent}Leaf: site={self.site}")
         
 def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, event_queue: EventQueue) -> None:
     """

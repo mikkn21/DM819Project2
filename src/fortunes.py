@@ -5,43 +5,54 @@ from events import *
 from tree import *
 from dcel import *
 import numpy as np
-from find_breakpoint import find_breakpoint
+from tree import check_circle_event
 
-def fortunes(points: list[Point]) -> None:
+
+def fortunes(points: list[Point]) -> Edge:
     event_queue = EventQueue([SiteEvent(p) for p in points])
-    
+     
     status = Tree(None, event_queue)
-    dcel = None 
+    dcel: Edge = None 
 
     while not event_queue.is_empty():
         event = event_queue.pop()
         if isinstance(event, SiteEvent):
             # handle_site_event(event)
-            status.add(event.site)
+            print("In site event: ", event.site)
+            status.add(event.site, event.site.y)
+            status.print_tree()
         else:
+            print("In circle event: ", event.middle_leaf.site)
             handle_circle_event(event)
     # TODO: Step 7
-    # TODO: Step 8
+    
+    
+    # TODO: Step 8 (Skip for now)
+
+
 
     def handle_circle_event(event: CircleEvent) -> None:
+
         # Step 1 
-        status.remove(event.leaf) 
+        # status.remove(event.middle_leaf) 
         # TODO: Assuming that the removed element is replaced all the way up the tree with the left-most leaf.
         #       Also, assume that it's always the middle arc that is removed by a circle event, i.e., it always has a leaf to the left and to the right of it.
         #       Check with Kim if this is correct 
         
         # Get neighbour leaves
-        p_next = event.leaf.next_leaf()     
+        p_next = event.middle_leaf.next_leaf()     
         p_next_next = p_next.next_leaf()
-        p_prev = event.leaf.prev_leaf()
+        p_prev = event.middle_leaf.prev_leaf()
         p_prev_prev = p_prev.prev_leaf()
+        parent = event.middle_leaf.parent
+        grand_parent = parent.parent
 
         # Update the tuples representing the breakpoints at the internal nodes
         # TODO: Can we assume we can do this in all cases?
         #       If it works, it might be because we don't balance the tree, and we always create a subtree in the format below.
-        event.leaf.parent.parent.arc_points[0] = p_prev.site
-        event.leaf.parent.parent.left = p_prev.site
-        p_prev.parent = event.leaf.parent.parent
+        grand_parent.arc_points[0] = p_prev.site
+        grand_parent.left = p_prev
+        p_prev.parent = grand_parent
     
         # Remove other circle events that use the arc
         delete_circle_event_if_using(event.leaf, p_next)
@@ -50,27 +61,30 @@ def fortunes(points: list[Point]) -> None:
         delete_circle_event_if_using(event.leaf, p_prev_prev)
 
         # Step 2
-        center_of_circle = center_of_circle_from_three_points(p_prev.site, event.leaf.site, p_next.site) 
+        center_of_circle = center_of_circle_from_three_points(p_prev.site, event.middle_leaf.site, p_next.site) 
         vertex = Vertex(center_of_circle.x, center_of_circle.y, None) # TODO: Set edge reference (if needed)
-        
 
-        parent: Node = event.middle_leaf.parent
-        grand_parent: Node = parent.parent
-        old_breakpoint = event.middle_leaf.parent.edge
         vertex.edge = Edge(vertex, None, None, None, None)
-        new_node = status.find_above(center_of_circle.x).parent # TODO: Maybe move into status.remove so we don't have to search in the tree to find it but rather just have it
-        new_node.edge = Edge(Point(vertex.x, vertex.y), vertex.edge, None, None, None)
-        vertex.edge.twin = new_node.edge
+
+        # TODO: Make less hacky 
+        if dcel == None:
+            print("DCEL is not none anymore")
+            dcel = vertex.edge
+
+        new_edge = Edge(Point(vertex.x, vertex.y), vertex.edge, None, None, None)
+        vertex.edge.twin = new_edge
+        # TODO: check if all the pointers are set correctly
         if event.middle_leaf == parent.right: # Parent is the breakpoint coming from the left
-            new_node.edge.next = parent.edge
-            vertex.edge.prev = grand_parent.edge.twin
+            new_edge.set_next(parent.edge)
+            vertex.edge.set_prev(grand_parent.edge.twin)
         else: # Parent is the breakpoint coming from the right
-            new_node.edge.next = grand_parent.edge
-            vertex.edge.prev = parent.edge.twin
-        
+            new_edge.set_next(grand_parent.edge)
+            vertex.edge.set_prev(parent.edge.twin)
+        grand_parent.edge = new_edge
 
         # Step 3
-
+        check_circle_event(p_prev_prev, p_prev, p_next, event_queue)
+        check_circle_event(p_prev, p_next, p_next_next, event_queue)
         
         
 
@@ -82,6 +96,9 @@ def fortunes(points: list[Point]) -> None:
         if leaf.circle_event != None and (leaf.circle_event.left_arc == using_leaf or leaf.circle_event.right_arc == using_leaf):
             event_queue.remove(leaf.circle_event)
             leaf.circle_event = None
+
+
+    return dcel
 
 def center_of_circle_from_three_points(p1, p2, p3) -> Point:
     """

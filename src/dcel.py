@@ -51,7 +51,34 @@ class Edge:
     
     # def copy(self) -> Edge:
     #     return Edge(self.origin, self.twin, self.face, self.next, self.prev)
-    
+
+
+    def set_next(self, next_edge: Edge) -> None:
+        """
+        Sets next of current edge and the previous of other edge accordingly
+        """
+        if self.next != None:
+            print("WARNING: in set_next: setting next of edge when it's already set")
+        elif next_edge.prev != None:
+            print("WARNING: in set_next: setting prev of edge when it's already set")
+
+        self.next = next_edge
+        next_edge.prev = self
+        
+
+    def set_prev(self, prev_edge: Edge) -> None:
+        """
+        Sets next of current edge and the previous of other edge accordingly
+        """
+        if self.prev != None:
+            print("WARNING: in set_prev: setting prev of edge when it's already set")
+        elif prev_edge.next != None:
+            print("WARNING: in set_prev: setting next of edge when it's already set")
+
+        self.prev = prev_edge
+        prev_edge.next = self
+        
+
 @dataclass
 class Face:
     component: Edge
