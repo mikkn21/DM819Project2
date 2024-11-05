@@ -37,13 +37,26 @@ class Node:
         # TODO: Don't base this on the x-coordinate of the first point
         #       But rather base it on the breakpoint between both the points in break_point
         if site.x < self.find_breakpoint(sweep_line_y).x:
-            self.left._add(site, event_queue)
+            self.left._add(site, sweep_line_y, event_queue)
         else:
-            self.right._add(site, event_queue)
+            self.right._add(site, sweep_line_y, event_queue)
     
     def find_breakpoint(self, sweep_line_y: float) -> Point:
-        breakpoint_left, breakpoint_right = find_breakpoint(self.arc_points[0], self.arc_points[1], sweep_line_y)
-        bp = breakpoint_right if self.arc_points[0].y < self.arc_points[1].y else breakpoint_left
+        # Note: If one site is a vertical line on the sweep line, there is only one breakpoint (bp)
+        bps = find_breakpoint(self.arc_points[0], self.arc_points[1], sweep_line_y)
+        if len(bps) == 1:
+            bp = bps[0]
+        else:
+            bp = bps[1] if self.arc_points[0].y < self.arc_points[1].y else bps[0]
+        # ? ===========================
+        # ?  self is None type WTTF? 
+        """
+            self.edge.origin.x = bp.x # TODO: Maybe not necessary
+            ^^^^^^^^^^^^^^^^
+            
+            AttributeError: 'NoneType' object has no attribute 'origin'
+        """
+        # ? ===========================
         self.edge.origin.x = bp.x # TODO: Maybe not necessary
         self.edge.origin.y = bp.y # TODO: Maybe not necessary
         return bp 
