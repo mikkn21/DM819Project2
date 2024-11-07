@@ -20,7 +20,7 @@ def fortunes(points: list[Point]) -> Edge:
             # handle_site_event(event)
             print("In site event: ", event.site)
             status.add(event.site, event.site.y)
-            status.print_tree()
+            # status.print_tree()
         else:
             print("In circle event: ", event.middle_leaf.site)
             handle_circle_event(event)
