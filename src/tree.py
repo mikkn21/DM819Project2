@@ -1,10 +1,12 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+
+import numpy as np
 from dcel import Edge
 from point import Point
 from events import CircleEvent, EventQueue
-from find_breakpoint import find_breakpoint
+from find_breakpoint import find_breakpoint, define_circle
 
 # Binary search tree
 @dataclass
@@ -17,6 +19,11 @@ class Tree:
             self.root = Leaf(site, None, None) # P: HandleSiteEvent step 1
         else:
             self.root._add(site, sweep_line_y, self.event_queue)
+            if isinstance(self.root, Leaf):
+                # print("Root is leaf", "Root:", self.root.site)
+                self.root = self.root.get_root()
+                if isinstance(self.root, Leaf): # TODO: Remove
+                    raise ValueError("Root is still a leaf - This really shouldn't happen") # TODO: Remove
 
     def print_tree(self):
         if self.root is not None:
@@ -30,7 +37,7 @@ class Node:
     left: Node | Leaf
     right: Node | Leaf
     parent: Node | None
-    arc_points: tuple[Point]
+    arc_points: list[Point]
     edge: Edge # Pointer in the doubley connected edge list 
 
     def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue) -> None:
@@ -60,7 +67,7 @@ class Node:
         """
         Precondition: cur_child is either self.left or self.right
         """
-        if self.left == cur_child:
+        if id(self.left) == id(cur_child):
             self.left = new_child
         else:
             self.right = new_child
@@ -97,20 +104,20 @@ class Leaf:
             left = None,
             right= self,
             parent=self.parent,
-            arc_points=(site, self.site),
+            arc_points=[site, self.site],
             edge=None
         )
 
         # replace the leaf with the root of the subtree     
         if self.parent != None: #TODO: Check if this is works
             self.parent.replace_child(self, node_parent)
-            self.parent = node_parent
+        self.parent = node_parent
             
         node_left = Node(
             left = None,
             right= None,
             parent= node_parent,
-            arc_points=(self.site, site),
+            arc_points=[self.site, site],
             edge=None
         )
         node_parent.left = node_left
@@ -134,14 +141,37 @@ class Leaf:
         # consecutive arcs to the right of the new arc
         p_i = node_parent.left.right
         p_j = p_i.next_leaf()
+        if p_j is None:
+            raise ValueError("p_j next is None but this should not be possible")
         p_k = p_j.next_leaf()
-        check_circle_event(p_i, p_j, p_k, event_queue)
+        if p_k is not None:
+            check_circle_event(p_i, p_j, p_k, sweep_line_y, event_queue)
+        else:
+            # print("p_k in next is None")
+            # p_i.print_tree()
+            pass
 
         # consecutive arcs to the left of the new arc
         p_i = node_parent.left.right
         p_j = p_i.prev_leaf()
+        if p_j is None:
+            # p_i.print_tree()
+            raise ValueError("p_j prev is None but this should not be possible")
         p_k = p_j.prev_leaf()
-        check_circle_event(p_i, p_j, p_k, event_queue)       
+        if p_k is not None:
+            check_circle_event(p_i, p_j, p_k, sweep_line_y, event_queue)       
+        else:
+            # print("p_k in prev is None")
+            pass
+
+    def get_root(self) -> Node | Leaf:
+        root = self
+        while root.parent is not None:
+            root = root.parent
+        return root
+
+    def print_tree(self):
+        self.get_root().print_subtree(level=0)
 
     def copy(self) -> Leaf:
         return Leaf(self.site, self.parent, self.circle_event)
@@ -151,9 +181,13 @@ class Leaf:
         Precondition: self is not the rightmost leaf
         """
         node = self
-        while node.parent is not None and node.parent.right == node:
+        while node.parent is not None and id(node.parent.right) == id(node):
             node = node.parent
-        node = self.parent.right
+
+        if node.parent is None: # we are at the root = self is the rightmost leaf
+            return None
+
+        node = node.parent.right
 
         while not isinstance(node, Leaf):
             node = node.left
@@ -164,10 +198,16 @@ class Leaf:
         """
         Precondition: self is not the leftmost leaf
         """
+        # print("prev_leaf in", self.site)
         node = self
-        while node.parent is not None and node.parent.left == node:
+        while node.parent is not None and id(node.parent.left) == id(node):
+
             node = node.parent
-        node = self.parent.left
+        
+        if node.parent is None: # we are at the root = self is the leftmost leaf
+            return None
+        
+        node = node.parent.left
 
         while not isinstance(node, Leaf):
             node = node.right
@@ -177,49 +217,20 @@ class Leaf:
     def print_subtree(self, level):
         indent = "  " * level
         print(f"{indent}Leaf: site={self.site}")
-        
-def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, event_queue: EventQueue) -> None:
+
+
+
+def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, sweep_line_y: float, event_queue: EventQueue) -> None:
     """
     Checks if there is a circle event between the three sites and adds it to the event_queue if there 
     """
-    # TODO: Might not work - check later
-    # Calculate the circle formed by new_node, middle, and end
-    # Get the determinant to ensure the points are not collinear
-    ax, ay = new_node.site
-    bx, by = middle.site
-    cx, cy = end.site
-    
-    det = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
-    
-    if det >= 0:
-        return  # No valid circle, as points are collinear or oriented in the wrong direction
-    
-    # Step 2: Calculate the circumcenter of the circle
-    A = ax - bx
-    B = ay - by
-    C = ax - cx
-    D = ay - cy
-    
-    E = A * (ax + bx) + B * (ay + by)
-    F = C * (ax + cx) + D * (ay + cy)
-    G = 2 * (A * (cy - by) - B * (cx - bx))
-    
-    if G == 0:
-        return  # No circle, the points are collinear
-    
-    # Circumcenter (ux, uy)
-    ux = (D * E - B * F) / G
-    uy = (A * F - C * E) / G
-    
-    # Step 3: Calculate the radius of the circle
-    r = ((ux - ax)**2 + (uy - ay)**2) ** 0.5
-    
-    # Step 4: Determine the lowest point on the circle (event location)
-    lowest_y = uy - r
-    
+    p, r = define_circle(new_node.site, middle.site, end.site)
+    if p is None:
+        return # not circle event
+
+    lowest_y = p.y - r    
     # If the lowest point is below the sweep line, add a circle event
-    if lowest_y < middle.sweep_y:
-        print("Add circle event to queue")
+    if lowest_y < sweep_line_y:
         event = CircleEvent(middle, lowest_y)
         middle.event = event
-        event_queue.insert(event)
+        event_queue.add(event)

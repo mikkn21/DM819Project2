@@ -9,6 +9,7 @@ def define_circle(left: Point, middle: Point, right: Point):
     Returns the center and radius of the circle passing the given 3 points.
     In case the 3 points form a line, returns (None, infinity).
     """
+    # print("Define circle of points: ", left, middle, right)
     p1, p2, p3 = [left.x, left.y], [middle.x, middle.y], [right.x, right.y] # TODO: Avoid redefining the points
     temp = p2[0] * p2[0] + p2[1] * p2[1]
     bc = (p1[0] * p1[0] + p1[1] * p1[1] - temp) / 2
@@ -23,7 +24,7 @@ def define_circle(left: Point, middle: Point, right: Point):
     cy = ((p1[0] - p2[0]) * cd - (p2[0] - p3[0]) * bc) / det
     
     radius = np.sqrt((cx - p1[0])**2 + (cy - p1[1])**2)
-    return ((cx, cy), radius)
+    return (Point(cx, cy), radius)
 
 def find_breakpoint(site1: Point, site2: Point, sweep_line_y: float) -> list[Point]:
     x = sp.Symbol('x')
