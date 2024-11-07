@@ -41,24 +41,18 @@ class Node:
         else:
             self.right._add(site, sweep_line_y, event_queue)
     
-    def find_breakpoint(self, sweep_line_y: float) -> Point:
+    def find_breakpoint(self, sweep_line_y: float, update_edge_origin: bool = True) -> Point:
         # Note: If one site is a vertical line on the sweep line, there is only one breakpoint (bp)
         bps = find_breakpoint(self.arc_points[0], self.arc_points[1], sweep_line_y)
         if len(bps) == 1:
             bp = bps[0]
         else:
             bp = bps[1] if self.arc_points[0].y < self.arc_points[1].y else bps[0]
-        # ? ===========================
-        # ?  self is None type WTTF? 
-        """
+
+        if update_edge_origin:
             self.edge.origin.x = bp.x # TODO: Maybe not necessary
-            ^^^^^^^^^^^^^^^^
-            
-            AttributeError: 'NoneType' object has no attribute 'origin'
-        """
-        # ? ===========================
-        self.edge.origin.x = bp.x # TODO: Maybe not necessary
-        self.edge.origin.y = bp.y # TODO: Maybe not necessary
+            self.edge.origin.y = bp.y # TODO: Maybe not necessary
+
         return bp 
 
 
@@ -130,7 +124,7 @@ class Leaf:
         node_left.left = copy_self
 
         # Step 4: Edges
-        breakpoint = node_parent.find_breakpoint(sweep_line_y)
+        breakpoint = node_parent.find_breakpoint(sweep_line_y, False)
         node_parent.edge = Edge(breakpoint, None, None, None, None)
         node_left.edge = Edge(breakpoint.copy(), None, None, None, None)
         node_parent.edge.twin = node_left.edge
@@ -157,7 +151,7 @@ class Leaf:
         Precondition: self is not the rightmost leaf
         """
         node = self
-        while node.parent.right == node:
+        while node.parent is not None and node.parent.right == node:
             node = node.parent
         node = self.parent.right
 
@@ -171,7 +165,7 @@ class Leaf:
         Precondition: self is not the leftmost leaf
         """
         node = self
-        while node.parent.left == node:
+        while node.parent is not None and node.parent.left == node:
             node = node.parent
         node = self.parent.left
 
@@ -191,9 +185,9 @@ def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, event_queue: Eve
     # TODO: Might not work - check later
     # Calculate the circle formed by new_node, middle, and end
     # Get the determinant to ensure the points are not collinear
-    ax, ay = new_node.point
-    bx, by = middle.point
-    cx, cy = end.point
+    ax, ay = new_node.site
+    bx, by = middle.site
+    cx, cy = end.site
     
     det = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
     
@@ -225,6 +219,7 @@ def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, event_queue: Eve
     
     # If the lowest point is below the sweep line, add a circle event
     if lowest_y < middle.sweep_y:
+        print("Add circle event to queue")
         event = CircleEvent(middle, lowest_y)
         middle.event = event
         event_queue.insert(event)
