@@ -28,49 +28,77 @@ def fortunes(points: list[Point]) -> Edge:
             print("Deleting a circle event because it's using the leaf")
             event_queue.remove(leaf.circle_event)
             leaf.circle_event = None
+    
+        
 
+    
     def handle_circle_event(event: CircleEvent) -> None:
         nonlocal dcel
+
+
         # Step 1
         # status.remove(event.middle_leaf)
         # TODO: Assuming that the removed element is replaced all the way up the tree with the left-most leaf.
         #       Also, assume that it's always the middle arc that is removed by a circle event, i.e., it always has a leaf to the left and to the right of it.
         #       Check with Kim if this is correct
 
-        print("Handle circle event. Middle leaf: ", event.middle_leaf.site)
 
         # Get neighbour leaves
-        p_next = event.middle_leaf.next_leaf()
+        p = event.middle_leaf
+        p_next = p.next_leaf()
         p_next_next = p_next.next_leaf()
-        p_prev = event.middle_leaf.prev_leaf()
+        p_prev = p.prev_leaf()
         p_prev_prev = p_prev.prev_leaf()
-        parent = event.middle_leaf.parent
-        grand_parent = parent.parent
-        print("")
-        print(
-            f"Parent: {parent.arc_points[0], parent.arc_points[1], parent.edge.origin}, Grand parent: {grand_parent.arc_points[0], grand_parent.arc_points[1], grand_parent.edge.origin}"
-        )
-        print(" ")
+        parent = p.parent
+
+        print("@@@@@@")
+        p.print_tree()
+        print(f"Handle circle event: {p_prev.site} - {p.site} - {p_next.site}")
+        print(f"Sweep line position: {event.key}")
+
+
         # Update the tuples representing the breakpoints at the internal nodes
         # TODO: Can we assume we can do this in all cases?
         #       If it works, it might be because we don't balance the tree, and we always create a subtree in the format below.
-        grand_parent.arc_points[0] = p_prev.site
-        # grand_parent.left = p_prev
-        # p_prev.parent = grand_parent
-        grand_parent.left = parent.left
-        parent.left.parent = grand_parent
+        # grand_parent.arc_points[0] = p_prev.site
+        # # grand_parent.left = p_prev
+        # # p_prev.parent = grand_parent
+        # grand_parent.left = parent.left
+        # parent.left.parent = grand_parent
+
+
+        # Replace the middle leaf with the correct subtree ? 
+        # we talk to kim about this # TODO: Remove
+        site = p.parent.left.right_most().site
+        p.parent.parent.replace_child(p.parent, p.parent.left)
+        # POSSIBLE REPLACEMENT FOR THE LINE ABOVE:
+        #   p.parent.parent.right = p.parent.left
+        #   p.parent.left.parent = p.parent.parent
+        node = p.parent.parent
+        while node.arc_points[0] != p.site:
+            node = node.parent
+        top_parent = node
+        top_parent.arc_points[0] = site
+
+
+        print("")
+        print(
+            f"Parent: {parent.arc_points[0]} {parent.arc_points[1]} {parent.edge.origin}, Top parent: {top_parent.arc_points[0], top_parent.arc_points[1], top_parent.edge.origin}"
+        )
+        print(" ")
 
         # Remove other circle events that use the arc
-        delete_circle_event_if_using(event.middle_leaf, p_next)
-        delete_circle_event_if_using(event.middle_leaf, p_next_next)
-        delete_circle_event_if_using(event.middle_leaf, p_prev)
-        delete_circle_event_if_using(event.middle_leaf, p_prev_prev)
+        delete_circle_event_if_using(p, p_next)
+        delete_circle_event_if_using(p, p_next_next)
+        delete_circle_event_if_using(p, p_prev)
+        delete_circle_event_if_using(p, p_prev_prev)
 
         # Step 2
         center_of_circle, r = define_circle(
-            p_prev.site, event.middle_leaf.site, p_next.site
+            p_prev.site, p.site, p_next.site
         )
         if center_of_circle is None:  # TODO: REMOVE
+            print(f"Circle center is None in handle_circle_event: {p_prev.site} - {p.site} - {p_next.site}")
             raise ValueError("Circle center is None in handle_circle_event")
         vertex = Vertex(
             center_of_circle.x, center_of_circle.y, None
@@ -93,35 +121,37 @@ def fortunes(points: list[Point]) -> Edge:
             print("Parent is coming from left")
             print("Parent edge origin: ", parent.edge.origin)
             print("Parent twin edge origin: ", parent.edge.twin.origin)
-            print("Grand parent edge origin: ", grand_parent.edge.origin)
-            print("Grand parent twin edge origin: ", grand_parent.edge.twin.origin)
+            print("Grand parent edge origin: ", top_parent.edge.origin)
+            print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
             new_edge.set_next(parent.edge)
-            parent.edge.twin.set_next(grand_parent.edge)
+            parent.edge.twin.set_next(top_parent.edge)
             parent.edge.origin = vertex
-            grand_parent.edge.origin = vertex
-            # grand_parent.edge.twin.set_next(vertex.edge)
-            vertex.edge.set_prev(grand_parent.edge.twin)
+            top_parent.edge.origin = vertex
+            # top_parent.edge.twin.set_next(vertex.edge)
+            vertex.edge.set_prev(top_parent.edge.twin)
         else:  # Parent is the breakpoint coming from the right
             print("Parent is coming from right")
-            new_edge.set_next(grand_parent.edge)
-            grand_parent.edge.twin.set_next(parent.edge)
-            grand_parent.edge.origin = vertex
+            new_edge.set_next(top_parent.edge)
+            top_parent.edge.twin.set_next(parent.edge)
+            top_parent.edge.origin = vertex
             parent.edge.origin = vertex
             vertex.edge.set_prev(parent.edge.twin)
         print("After:")
         print("Parent edge origin: ", parent.edge.origin)
         print("Parent twin edge origin: ", parent.edge.twin.origin)
-        print("Grand parent edge origin: ", grand_parent.edge.origin)
-        print("Grand parent twin edge origin: ", grand_parent.edge.twin.origin)
-        grand_parent.edge = new_edge
+        print("Grand parent edge origin: ", top_parent.edge.origin)
+        print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
+        top_parent.edge = new_edge
 
         # TODO: Make less hacky
         if dcel is None:
             dcel = vertex.edge
 
         # Step 3
-        check_circle_event(p_prev_prev, p_prev, p_next, event.key, event_queue)
-        check_circle_event(p_prev, p_next, p_next_next, event.key, event_queue)
+        if p_prev_prev is not None:
+            check_circle_event(p_prev_prev, p_prev, p_next, event.key, event_queue)
+        if p_next_next is not None:
+            check_circle_event(p_prev, p_next, p_next_next, event.key, event_queue)
 
     while not event_queue.is_empty():
         event = event_queue.pop()

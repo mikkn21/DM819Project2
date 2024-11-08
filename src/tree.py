@@ -71,8 +71,14 @@ class Node:
             self.left = new_child
         else:
             self.right = new_child
+        new_child.parent = self
     
-
+    def right_most(self) -> Leaf:
+        """ 
+        Get the right-most child of the current nodes parents left subtree
+        """
+        return self.right.right_most() # Assume all nodes have a right child
+    
     
     def print_subtree(self, level):
         indent = "  " * level
@@ -163,6 +169,10 @@ class Leaf:
         else:
             # print("p_k in prev is None")
             pass
+        
+    
+    def right_most(self) -> Leaf:
+        return self
 
     def get_root(self) -> Node | Leaf:
         root = self
@@ -201,11 +211,14 @@ class Leaf:
         # print("prev_leaf in", self.site)
         node = self
         while node.parent is not None and id(node.parent.left) == id(node):
-
             node = node.parent
         
+        print("before parent none check")
         if node.parent is None: # we are at the root = self is the leftmost leaf
+            print("PARENT IS NONE")
             return None
+        if isinstance(node, Node):
+            print("Current node", node.arc_points[0], node.arc_points[1])
         
         node = node.parent.left
 
