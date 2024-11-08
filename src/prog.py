@@ -113,5 +113,6 @@ if __name__ == "__main__":
             sys.exit(1) 
 
     output = fortunes(points)
+        
 
-    dcel_plot.dcel_plot(output)
+    dcel_plot.dcel_plot(output, points)

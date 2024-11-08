@@ -30,14 +30,16 @@ class Edge:
     prev: Edge
 
     def __str__(self) -> str:
-        return f"Edge({self.origin}, {self.next.origin})"
+        return f"Edge({self.origin}, {self.next.origin if self.next != None else "t:" + str(self.twin.origin) if self.twin != None else "None"})"
 
     def __eq__(self, other: object) -> bool:
         return (isinstance(other, Edge) and 
-                self.origin == other.origin and self.next.origin == other.next.origin)
+                self.origin == other.origin and (self.next.origin == other.next.origin if self.next != None else self.next == other.next))
 
     def __hash__(self) -> int:
-        return hash((self.origin, self.next.origin))
+        return hash((self.origin, 
+                     self.next.origin if self.next != None else None,
+                     self.twin.origin if self.twin != None else None))
 
     def find_edge(self, edge: Edge) -> Edge | None:
         if self == edge:

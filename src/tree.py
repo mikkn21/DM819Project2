@@ -56,7 +56,7 @@ class Node:
         else:
             bp = bps[1] if self.arc_points[0].y < self.arc_points[1].y else bps[0]
 
-        if update_edge_origin:
+        if update_edge_origin and isinstance(self.edge.origin, Point):
             self.edge.origin.x = bp.x # TODO: Maybe not necessary
             self.edge.origin.y = bp.y # TODO: Maybe not necessary
 
