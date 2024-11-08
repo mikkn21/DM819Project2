@@ -77,6 +77,7 @@ def fortunes(points: list[Point]) -> Edge:
         node = p.parent.parent
         while node.arc_points[0] != p.site:
             node = node.parent
+        p.parent.parent = None
         top_parent = node
         top_parent.arc_points[0] = site
 
