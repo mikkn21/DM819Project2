@@ -69,9 +69,12 @@ class Node:
         """
         if id(self.left) == id(cur_child):
             self.left = new_child
-        else:
+        elif id(self.right) == id(cur_child):
             self.right = new_child
+        else:
+            raise ValueError("cur_child is not a child of this node")
         new_child.parent = self
+        cur_child.parent = None
     
     def right_most(self) -> Leaf:
         """ 

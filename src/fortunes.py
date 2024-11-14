@@ -42,14 +42,14 @@ def fortunes(points: list[Point]) -> Edge:
         #       Also, assume that it's always the middle arc that is removed by a circle event, i.e., it always has a leaf to the left and to the right of it.
         #       Check with Kim if this is correct
 
-
         # Get neighbour leaves
         p = event.middle_leaf
         p_next = p.next_leaf()
-        p_next_next = p_next.next_leaf()
-        p_prev = p.prev_leaf()
-        p_prev_prev = p_prev.prev_leaf()
+        p_next_next = p_next.next_leaf() if p_next else None
+        p_prev = p.prev_leaf() 
+        p_prev_prev = p_prev.prev_leaf() if p_prev else None
         parent = p.parent
+        grand_parent = parent.parent
 
         print("@@@@@@")
         p.print_tree()
@@ -70,16 +70,21 @@ def fortunes(points: list[Point]) -> Edge:
         # Replace the middle leaf with the correct subtree ? 
         # we talk to kim about this # TODO: Remove
         site = p.parent.left.right_most().site
-        p.parent.parent.replace_child(p.parent, p.parent.left)
+        grand_parent.replace_child(parent, parent.left) 
+        parent.left = None
+
         # POSSIBLE REPLACEMENT FOR THE LINE ABOVE:
         #   p.parent.parent.right = p.parent.left
         #   p.parent.left.parent = p.parent.parent
-        node = p.parent.parent
+        node = grand_parent
+        print(f"node : {node.arc_points[0], node.arc_points[1]}")
         while node.arc_points[0] != p.site:
+            print(f"node : {node.arc_points[0], node.arc_points[1]}")
             node = node.parent
-        p.parent.parent = None
+        # p.parent.parent = None # THIS FUCKS IT UP BUT SHOULD BE OKAY. next_leaf() for some reason still uses some old pointers so removing this pointer creates issues.
         top_parent = node
         top_parent.arc_points[0] = site
+        
 
 
         print("")
@@ -111,14 +116,10 @@ def fortunes(points: list[Point]) -> Edge:
 
         vertex.edge = Edge(vertex, None, None, None, None)
 
-        new_edge = Edge(
-            Point(vertex.x, vertex.y), vertex.edge, None, None, None
-        )  # The edge of the new breakpoint
+        new_edge = Edge(Point(vertex.x, vertex.y), vertex.edge, None, None, None)  # The edge of the new breakpoint
         vertex.edge.twin = new_edge
         # TODO: check if all the pointers are set correctly
-        if id(event.middle_leaf) == id(
-            parent.right
-        ):  # Parent is the breakpoint coming from the left
+        if id(p) == id(parent.right):  # Parent is the breakpoint coming from the left
             print("Parent is coming from left")
             print("Parent edge origin: ", parent.edge.origin)
             print("Parent twin edge origin: ", parent.edge.twin.origin)
