@@ -31,6 +31,11 @@ class Tree:
         else:
             print("Tree is empty.")
 
+    def update_breakpoints(self, sweep_line_y: float) -> None:
+        if self.root is not None and isinstance(self.root, Node):
+            print("Find breakpoint root")
+            self.root.update_breakpoints(sweep_line_y)
+
 
 @dataclass
 class Node:
@@ -39,6 +44,14 @@ class Node:
     parent: Node | None
     arc_points: list[Point]
     edge: Edge # Pointer in the doubley connected edge list 
+
+    def update_breakpoints(self, sweep_line_y: float) -> None:
+        print("Find breakpoint")
+        self.find_breakpoint(sweep_line_y)
+        if self.left is not None and isinstance(self.left, Node):
+            self.left.update_breakpoints(sweep_line_y)
+        if self.right is not None and isinstance(self.right, Node):
+            self.right.update_breakpoints(sweep_line_y)
 
     def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue) -> None:
         # TODO: Don't base this on the x-coordinate of the first point

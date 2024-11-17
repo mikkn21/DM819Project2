@@ -148,20 +148,27 @@ def fortunes(points: list[Point]) -> Edge:
         if p_next_next is not None:
             check_circle_event(p_prev, p_next, p_next_next, event.key, event_queue)
 
+    sweep_line_y = 0
     while not event_queue.is_empty():
         event = event_queue.pop()
         if isinstance(event, SiteEvent):
             # handle_site_event(event)
             print("In site event: ", event.site)
+            sweep_line_y = event.site.y # TODO: Make prettier
             status.add(event.site, event.site.y)
             print("After site event:")
             status.print_tree()
         else:
             event.middle_leaf.circle_event = None
             print("In circle event: ", event.middle_leaf.site)
+            sweep_line_y = event.key # TODO: Make prettier
             handle_circle_event(event)
             print("After circle event:")
             status.print_tree()
+
+
+    status.update_breakpoints(sweep_line_y)
+
     # TODO: Step 7
 
     # TODO: Step 8 (Skip for now)
