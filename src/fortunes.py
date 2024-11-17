@@ -13,24 +13,6 @@ def fortunes(points: list[Point]) -> Edge:
 
     status = Tree(None, event_queue)
     dcel: Edge = None
-
-    def delete_circle_event_if_using(using_leaf: Leaf, leaf: Leaf) -> None:
-        """
-        Deletes the circle event on leaf from the event_queue if the using_leaf is a part of the circle event
-        Except if the using_leaf is in the middle :)
-        """
-        if leaf == None:
-            return
-        if leaf.circle_event is not None and (
-            id(leaf.circle_event.left_arc) == id(using_leaf)
-            or id(leaf.circle_event.right_arc) == id(using_leaf)
-        ):
-            print("Deleting a circle event because it's using the leaf")
-            event_queue.remove(leaf.circle_event)
-            leaf.circle_event = None
-    
-        
-
     
     def handle_circle_event(event: CircleEvent) -> None:
         nonlocal dcel
@@ -94,10 +76,10 @@ def fortunes(points: list[Point]) -> Edge:
         print(" ")
 
         # Remove other circle events that use the arc
-        delete_circle_event_if_using(p, p_next)
-        delete_circle_event_if_using(p, p_next_next)
-        delete_circle_event_if_using(p, p_prev)
-        delete_circle_event_if_using(p, p_prev_prev)
+        delete_circle_event_if_using(p, p_next, event_queue)
+        delete_circle_event_if_using(p, p_next_next, event_queue)
+        delete_circle_event_if_using(p, p_prev, event_queue)
+        delete_circle_event_if_using(p, p_prev_prev, event_queue)
 
         # Step 2
         center_of_circle, r = define_circle(
@@ -173,3 +155,17 @@ def fortunes(points: list[Point]) -> Edge:
     # TODO: Step 8 (Skip for now)
 
     return dcel
+
+def delete_circle_event_if_using(using_leaf: Leaf, leaf: Leaf, event_queue: EventQueue) -> None:
+    """
+    Deletes the circle event on leaf from the event_queue if the using_leaf is a part of the circle event
+    Except if the using_leaf is in the middle :)
+    """
+    if leaf == None:
+        return
+    if leaf.circle_event is not None and (
+        id(leaf.prev_leaf()) == id(using_leaf) or id(leaf.next_leaf()) == id(using_leaf)
+        ):
+        print("Deleting a circle event because it's using the leaf")
+        event_queue.remove(leaf.circle_event)
+        leaf.circle_event = None
