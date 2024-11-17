@@ -17,6 +17,9 @@ def fortunes(points: list[Point]) -> Edge:
     def handle_circle_event(event: CircleEvent) -> None:
         nonlocal dcel
 
+        # if event.middle_leaf.parent.left is None: # TODO: Remove. Just used for debugging
+        #     print("WE GOT AN OLD TREE")
+        #     return
 
         # Step 1
         # status.remove(event.middle_leaf)
@@ -51,21 +54,30 @@ def fortunes(points: list[Point]) -> Edge:
 
         # Replace the middle leaf with the correct subtree ? 
         # we talk to kim about this # TODO: Remove
-        site = p.parent.left.right_most().site
-        grand_parent.replace_child(parent, parent.left) 
+        site = p_prev.site
+        grand_parent.replace_child(parent, parent.left if id(parent.right) == id(p) else parent.right)
+        # TODO: Remove
         parent.left = None
+        parent.parent = None # THIS FUCKS IT UP BUT SHOULD BE OKAY. next_leaf() for some reason still uses some old pointers so removing this pointer creates issues.
 
         # POSSIBLE REPLACEMENT FOR THE LINE ABOVE:
         #   p.parent.parent.right = p.parent.left
         #   p.parent.left.parent = p.parent.parent
         node = grand_parent
-        print(f"node : {node.arc_points[0], node.arc_points[1]}")
-        while node.arc_points[0] != p.site:
+        print(f"|________node___________| : {node.arc_points[0], node.arc_points[1]}")
+        while node.arc_points[0] != p.site and node.arc_points[1] != p.site: # TODO: Try without the arc_points[1] stuff
             print(f"node : {node.arc_points[0], node.arc_points[1]}")
             node = node.parent
-        # p.parent.parent = None # THIS FUCKS IT UP BUT SHOULD BE OKAY. next_leaf() for some reason still uses some old pointers so removing this pointer creates issues.
+        if node.arc_points[0] == p.site:
+            print("Arc point equals site: ", node.arc_points[0], p.site)
+            node.arc_points[0] = site
+        elif node.arc_points[1] == p.site: # TODO: Make nicer
+            print("Arc point equals site: ", node.arc_points[1], p.site)
+            node.arc_points[1] = site
+        else:
+            raise ValueError("The leaf is not in the tree")
         top_parent = node
-        top_parent.arc_points[0] = site
+        # node.arc_points[0] = site
         
 
 
@@ -76,10 +88,9 @@ def fortunes(points: list[Point]) -> Edge:
         print(" ")
 
         # Remove other circle events that use the arc
-        delete_circle_event_if_using(p, p_next, event_queue)
-        delete_circle_event_if_using(p, p_next_next, event_queue)
-        delete_circle_event_if_using(p, p_prev, event_queue)
-        delete_circle_event_if_using(p, p_prev_prev, event_queue)
+        # This can only be the next or previous leaves.
+        delete_circle_event(p_next, event_queue)
+        delete_circle_event(p_prev, event_queue)
 
         # Step 2
         center_of_circle, r = define_circle(
@@ -146,6 +157,7 @@ def fortunes(points: list[Point]) -> Edge:
             print("After site event:")
             status.print_tree()
         else:
+            event.middle_leaf.circle_event = None
             print("In circle event: ", event.middle_leaf.site)
             handle_circle_event(event)
             print("After circle event:")
@@ -156,16 +168,11 @@ def fortunes(points: list[Point]) -> Edge:
 
     return dcel
 
-def delete_circle_event_if_using(using_leaf: Leaf, leaf: Leaf, event_queue: EventQueue) -> None:
+def delete_circle_event(leaf: Leaf, event_queue: EventQueue) -> None:
     """
-    Deletes the circle event on leaf from the event_queue if the using_leaf is a part of the circle event
-    Except if the using_leaf is in the middle :)
+    Deletes the circle event on leaf from the event_queue if it exists.
     """
-    if leaf == None:
-        return
-    if leaf.circle_event is not None and (
-        id(leaf.prev_leaf()) == id(using_leaf) or id(leaf.next_leaf()) == id(using_leaf)
-        ):
+    if leaf.circle_event is not None:
         print("Deleting a circle event because it's using the leaf")
         event_queue.remove(leaf.circle_event)
         leaf.circle_event = None

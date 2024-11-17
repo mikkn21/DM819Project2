@@ -248,5 +248,5 @@ def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, sweep_line_y: fl
     # If the lowest point is below the sweep line, add a circle event
     if lowest_y < sweep_line_y:
         event = CircleEvent(middle, lowest_y)
-        middle.event = event
+        middle.circle_event = event
         event_queue.add(event)

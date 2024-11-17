@@ -18,9 +18,8 @@ class Point:
         return f"Point({self.x}, {self.y})"
 
     def __eq__(self, other: object) -> bool:
-        diff = 1
         return (isinstance(other, Point) and 
-                math.isclose(self.x, other.x, rel_tol=diff) and math.isclose(self.y, other.y, rel_tol=diff))
+                math.isclose(self.x, other.x) and math.isclose(self.y, other.y))
 
     def copy(self) -> Point:
         return Point(self.x, self.y)
