@@ -23,7 +23,6 @@ def fortunes(points: list[Point]) -> Edge:
 
         # Step 1
         # status.remove(event.middle_leaf)
-
         # TODO: Assuming that the removed element is replaced all the way up the tree with the left-most leaf.
         #       Also, assume that it's always the middle arc that is removed by a circle event, i.e., it always has a leaf to the left and to the right of it.
         #       Check with Kim if this is correct
@@ -46,7 +45,6 @@ def fortunes(points: list[Point]) -> Edge:
         # Update the tuples representing the breakpoints at the internal nodes
         # TODO: Can we assume we can do this in all cases?
         #       If it works, it might be because we don't balance the tree, and we always create a subtree in the format below.
-
         # grand_parent.arc_points[0] = p_prev.site
         # # grand_parent.left = p_prev
         # # p_prev.parent = grand_parent
@@ -112,7 +110,6 @@ def fortunes(points: list[Point]) -> Edge:
         vertex.edge = Edge(vertex, None, None, None, None)
 
         new_edge = Edge(Point(vertex.x, vertex.y), vertex.edge, None, None, None)  # The edge of the new breakpoint
-
         vertex.edge.twin = new_edge
         # TODO: check if all the pointers are set correctly
         if id(p) == id(parent.right):  # Parent is the breakpoint coming from the left
@@ -174,8 +171,9 @@ def fortunes(points: list[Point]) -> Edge:
 
     # TODO: Step 7
 
-
     # TODO: Step 8 (Skip for now)
+
+    return dcel
 
 def delete_circle_event(leaf: Leaf, event_queue: EventQueue) -> None:
     """

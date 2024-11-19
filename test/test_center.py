@@ -4,7 +4,6 @@ import math
 import numpy as np
 from find_breakpoint import define_circle
 from point import Point
-from find_breakpoint import define_circle
 
 def test_center_on_circle():
 

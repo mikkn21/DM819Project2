@@ -185,11 +185,10 @@ class Leaf:
         else:
             # print("p_k in prev is None")
             pass
-
-           
+        
+    
     def right_most(self) -> Leaf:
         return self
-
 
     def get_root(self) -> Node | Leaf:
         root = self
@@ -263,5 +262,4 @@ def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, sweep_line_y: fl
     if lowest_y < sweep_line_y:
         event = CircleEvent(middle, lowest_y)
         middle.circle_event = event
-
         event_queue.add(event)
