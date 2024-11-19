@@ -35,7 +35,8 @@ class EventQueue:
         return self.events.pop()
 
     def remove(self, event: SiteEvent | CircleEvent) -> None:
-       self.events.remove(event)
+        self.events.remove(event)
+        self.size -= 1
 
     def is_empty(self) -> bool:
         return self.size <= 0

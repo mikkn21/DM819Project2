@@ -31,6 +31,11 @@ class Tree:
         else:
             print("Tree is empty.")
 
+    def update_breakpoints(self, sweep_line_y: float) -> None:
+        if self.root is not None and isinstance(self.root, Node):
+            print("Find breakpoint root")
+            self.root.update_breakpoints(sweep_line_y)
+
 
 @dataclass
 class Node:
@@ -39,6 +44,14 @@ class Node:
     parent: Node | None
     arc_points: list[Point]
     edge: Edge # Pointer in the doubley connected edge list 
+
+    def update_breakpoints(self, sweep_line_y: float) -> None:
+        print("Find breakpoint")
+        self.find_breakpoint(sweep_line_y)
+        if self.left is not None and isinstance(self.left, Node):
+            self.left.update_breakpoints(sweep_line_y)
+        if self.right is not None and isinstance(self.right, Node):
+            self.right.update_breakpoints(sweep_line_y)
 
     def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue) -> None:
         # TODO: Don't base this on the x-coordinate of the first point
@@ -56,7 +69,7 @@ class Node:
         else:
             bp = bps[1] if self.arc_points[0].y < self.arc_points[1].y else bps[0]
 
-        if update_edge_origin:
+        if update_edge_origin and isinstance(self.edge.origin, Point):
             self.edge.origin.x = bp.x # TODO: Maybe not necessary
             self.edge.origin.y = bp.y # TODO: Maybe not necessary
 
@@ -69,10 +82,19 @@ class Node:
         """
         if id(self.left) == id(cur_child):
             self.left = new_child
-        else:
+        elif id(self.right) == id(cur_child):
             self.right = new_child
+        else:
+            raise ValueError("cur_child is not a child of this node")
+        new_child.parent = self
+        cur_child.parent = None
     
-
+    def right_most(self) -> Leaf:
+        """ 
+        Get the right-most child of the current nodes parents left subtree
+        """
+        return self.right.right_most() # Assume all nodes have a right child
+    
     
     def print_subtree(self, level):
         indent = "  " * level
@@ -164,6 +186,11 @@ class Leaf:
             # print("p_k in prev is None")
             pass
 
+           
+    def right_most(self) -> Leaf:
+        return self
+
+
     def get_root(self) -> Node | Leaf:
         root = self
         while root.parent is not None:
@@ -201,11 +228,14 @@ class Leaf:
         # print("prev_leaf in", self.site)
         node = self
         while node.parent is not None and id(node.parent.left) == id(node):
-
             node = node.parent
         
+        print("before parent none check")
         if node.parent is None: # we are at the root = self is the leftmost leaf
+            print("PARENT IS NONE")
             return None
+        if isinstance(node, Node):
+            print("Current node", node.arc_points[0], node.arc_points[1])
         
         node = node.parent.left
 
@@ -232,5 +262,6 @@ def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, sweep_line_y: fl
     # If the lowest point is below the sweep line, add a circle event
     if lowest_y < sweep_line_y:
         event = CircleEvent(middle, lowest_y)
-        middle.event = event
+        middle.circle_event = event
+
         event_queue.add(event)

@@ -9,7 +9,8 @@ def define_circle(left: Point, middle: Point, right: Point):
     Returns the center and radius of the circle passing the given 3 points.
     In case the 3 points form a line, returns (None, infinity).
     """
-    # print("Define circle of points: ", left, middle, right)
+    print("Define circle of points: ", left, middle, right)
+
     p1, p2, p3 = [left.x, left.y], [middle.x, middle.y], [right.x, right.y] # TODO: Avoid redefining the points
     temp = p2[0] * p2[0] + p2[1] * p2[1]
     bc = (p1[0] * p1[0] + p1[1] * p1[1] - temp) / 2
