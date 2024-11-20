@@ -33,7 +33,7 @@ class Tree:
 
     def update_breakpoints(self, sweep_line_y: float) -> None:
         if self.root is not None and isinstance(self.root, Node):
-            print("Find breakpoint root")
+            # print("Find breakpoint root")
             self.root.update_breakpoints(sweep_line_y)
 
 
@@ -167,7 +167,7 @@ class Leaf:
             raise ValueError("p_j next is None but this should not be possible")
         p_k = p_j.next_leaf()
         if p_k is not None:
-            check_circle_event(p_i, p_j, p_k, sweep_line_y, event_queue)
+            check_circle_event(p_i, p_j, p_k, sweep_line_y, event_queue, True)
         else:
             # print("p_k in next is None")
             # p_i.print_tree()
@@ -181,7 +181,7 @@ class Leaf:
             raise ValueError("p_j prev is None but this should not be possible")
         p_k = p_j.prev_leaf()
         if p_k is not None:
-            check_circle_event(p_i, p_j, p_k, sweep_line_y, event_queue)       
+            check_circle_event(p_i, p_j, p_k, sweep_line_y, event_queue, False)       
         else:
             # print("p_k in prev is None")
             pass
@@ -229,12 +229,12 @@ class Leaf:
         while node.parent is not None and id(node.parent.left) == id(node):
             node = node.parent
         
-        print("before parent none check")
+        # print("before parent none check")
         if node.parent is None: # we are at the root = self is the leftmost leaf
-            print("PARENT IS NONE")
+        #     print("PARENT IS NONE")
             return None
-        if isinstance(node, Node):
-            print("Current node", node.arc_points[0], node.arc_points[1])
+        # if isinstance(node, Node):
+        #     print("Current node", node.arc_points[0], node.arc_points[1])
         
         node = node.parent.left
 
@@ -249,17 +249,34 @@ class Leaf:
 
 
 
-def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, sweep_line_y: float, event_queue: EventQueue) -> None:
+def check_circle_event(new_node: Leaf, middle: Leaf, end: Leaf, sweep_line_y: float, event_queue: EventQueue, is_left_most : bool) -> None:
     """
     Checks if there is a circle event between the three sites and adds it to the event_queue if there 
     """
+    print("Check circle event")
     p, r = define_circle(new_node.site, middle.site, end.site)
     if p is None:
+        print("No circle event")
+        print()
         return # not circle event
+    print("Circle event")
 
     lowest_y = p.y - r    
-    # If the lowest point is below the sweep line, add a circle event
-    if lowest_y < sweep_line_y:
+
+    if is_left_most and p.x > new_node.site.x:
+        event = CircleEvent(middle, lowest_y)
+        middle.circle_event = event 
+        event_queue.add(event)
+    elif not is_left_most and p.x < new_node.site.x:
         event = CircleEvent(middle, lowest_y)
         middle.circle_event = event
         event_queue.add(event)
+
+
+    # If the lowest point is below the sweep line, add a circle event
+    # if lowest_y < sweep_line_y:
+    #     print("Circle event lowest_y", lowest_y)
+    #     event = CircleEvent(middle, lowest_y)
+    #     middle.circle_event = event
+    #     event_queue.add(event)
+    # print()

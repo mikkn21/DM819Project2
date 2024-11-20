@@ -22,6 +22,19 @@ def plot_vertices(vertices: set[Vertex]) -> None:
         print("plt vertex")
         plt.plot(vertex.x, vertex.y, "bo" if isinstance(vertex, Point) else "ko")
 
+def print_decl(init_edge: Edge, sites: list[Point]) -> None:
+    print("Initial edge:")
+    print(init_edge)
+    print()
+    edges = get_all_edges(init_edge)
+    vertices = get_all_vertices(edges)
+    print("Edges:")
+    for edge in edges:
+        print(edge)
+    print()
+    print("Vertices:")
+    for vertex in vertices:
+        print(vertex)
 
 def dcel_plot(init_edge: Edge, sites: list[Point]) -> None:
     plt.figure()
@@ -55,6 +68,7 @@ def dcel_plot(init_edge: Edge, sites: list[Point]) -> None:
     max_y = max([v[1] for v in coordinates])
     min_y = min([v[1] for v in coordinates])
     padding = 5
+    
     max_y = 250
     max_x = 150
 
