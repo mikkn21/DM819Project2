@@ -121,37 +121,37 @@ def fortunes(points: list[Point]) -> Edge:
 
         new_edge = Edge(Point(vertex.x, vertex.y), vertex.edge, None, None, None)  # The edge of the new breakpoint
         vertex.edge.twin = new_edge
-        print("new edge origin on init: ", new_edge.origin)
+        # print("new edge origin on init: ", new_edge.origin)
         # TODO: check if all the pointers are set correctly
         if p_is_left_child:  # Parent is the breakpoint coming from the right
-            print("Parent is coming from right")
-            print("Parent edge origin: ", parent.edge.origin)
-            print("Parent twin edge origin: ", parent.edge.twin.origin)
-            print("Grand parent edge origin: ", top_parent.edge.origin)
-            print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
+            # print("Parent is coming from right")
+            # print("Parent edge origin: ", parent.edge.origin)
+            # print("Parent twin edge origin: ", parent.edge.twin.origin)
+            # print("Grand parent edge origin: ", top_parent.edge.origin)
+            # print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
             new_edge.set_next(parent.edge)
             parent.edge.twin.set_next(top_parent.edge)
             parent.edge.origin = vertex
             top_parent.edge.origin = vertex
             vertex.edge.set_prev(top_parent.edge.twin)
         else:  # Parent is the breakpoint coming from the left
-            print("Parent is coming from left")
-            print("Parent edge origin: ", parent.edge.origin)
-            print("Parent twin edge origin: ", parent.edge.twin.origin)
-            print("Grand parent edge origin: ", top_parent.edge.origin)
-            print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
+            # print("Parent is coming from left")
+            # print("Parent edge origin: ", parent.edge.origin)
+            # print("Parent twin edge origin: ", parent.edge.twin.origin)
+            # print("Grand parent edge origin: ", top_parent.edge.origin)
+            # print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
             new_edge.set_next(top_parent.edge)
             top_parent.edge.twin.set_next(parent.edge)
             top_parent.edge.origin = vertex
             parent.edge.origin = vertex
             vertex.edge.set_prev(parent.edge.twin)
-        print("After:")
-        print("Parent edge origin: ", parent.edge.origin)
-        print("Parent twin edge origin: ", parent.edge.twin.origin)
-        print("Grand parent edge origin: ", top_parent.edge.origin)
-        print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
+        # print("After:")
+        # print("Parent edge origin: ", parent.edge.origin)
+        # print("Parent twin edge origin: ", parent.edge.twin.origin)
+        # print("Grand parent edge origin: ", top_parent.edge.origin)
+        # print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
         top_parent.edge = new_edge
-        print("Top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
+        # print("Top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
 
         # TODO: Make less hacky
         if dcel is None:
@@ -159,14 +159,15 @@ def fortunes(points: list[Point]) -> Edge:
 
         
         print("Tree before after")
-        p_prev.print_tree(event.key)        
+        p_prev.print_tree(event.key)    
+        print()    
 
         # Step 3
         if p_prev_prev is not None:
             check_circle_event_for_circle_event(p_next, p_prev, p_prev_prev, center_of_circle, event.key, event_queue, False)            
         if p_next_next is not None:
             check_circle_event_for_circle_event(p_prev, p_next, p_next_next, center_of_circle, event.key, event_queue, True)
-        print("After check circle events: top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
+        # print("After check circle events: top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
         print("Tree after")
         p_prev.print_tree(event.key)        
 
