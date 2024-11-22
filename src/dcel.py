@@ -12,7 +12,7 @@ class Vertex:
     edge: Edge
     
     def __str__(self):
-        return f"Vertex({self.x}, {self.y})"
+        return f"Vertex({self.x:.2f}, {self.y:.2f})"
 
     def __hash__(self) -> int:
         return hash((self.x, self.y))
@@ -21,13 +21,21 @@ class Vertex:
         return (isinstance(other, Vertex) and 
                 self.x == other.x and self.y == other.y)
     
-@dataclass
+# @dataclass
 class Edge:
-    origin: Vertex
-    twin: Edge
-    face: Face
-    next: Edge
-    prev: Edge
+    # origin: Vertex
+    # twin: Edge
+    # face: Face
+    # next: Edge
+    # prev: Edge
+
+    def __init__(self, origin: Vertex, twin: Edge | None, face: Face | None, next: Edge | None, prev: Edge | None):
+        self.origin = origin
+        self.twin = twin
+        self.face = face
+        self.next = next
+        self.prev = prev
+        print("Edge created ", self)
 
     def __str__(self) -> str:
         return f"Edge({self.origin}, {self.next.origin if self.next != None else "t:" + str(self.twin.origin) if self.twin != None else "None"})"
@@ -59,6 +67,7 @@ class Edge:
         """
         Sets next of current edge and the previous of other edge accordingly
         """
+        print("Set next of ", self, " to ", next_edge)
         if self.next != None:
             print("WARNING: in set_next: setting next of edge when it's already set")
         elif next_edge.prev != None:
@@ -66,12 +75,14 @@ class Edge:
 
         self.next = next_edge
         next_edge.prev = self
+        print("After set next: ", self)
         
 
     def set_prev(self, prev_edge: Edge) -> None:
         """
         Sets next of current edge and the previous of other edge accordingly
         """
+        print("Set prev of ", self, " to ", prev_edge)
         if self.prev != None:
             print("WARNING: in set_prev: setting prev of edge when it's already set")
         elif prev_edge.next != None:
@@ -79,6 +90,7 @@ class Edge:
 
         self.prev = prev_edge
         prev_edge.next = self
+        print("After set prev: ", self)
         
 
 @dataclass

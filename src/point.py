@@ -12,10 +12,10 @@ class Point:
         return math.isclose(self.x, other.x, rel_tol=relative_diff) and math.isclose(self.y, other.y, rel_tol=relative_diff)
 
     def __repr__(self) -> str:
-        return f"Point({self.x}, {self.y})"
+        return f"Point({self.x:.2f}, {self.y:.2f})"
 
     def __str__(self) -> str:
-        return f"Point({self.x}, {self.y})"
+        return f"Point({self.x:.2f}, {self.y:.2f})"
 
     def __eq__(self, other: object) -> bool:
         return (isinstance(other, Point) and 

@@ -4,7 +4,7 @@ from events import *
 from tree import *
 from dcel import *
 import numpy as np
-from tree import check_circle_event
+from tree import check_circle_event_for_circle_event
 from find_breakpoint import define_circle
 from visualization.dcel_plot import print_decl
 
@@ -39,7 +39,8 @@ def fortunes(points: list[Point]) -> Edge:
         p_is_left_child = id(parent.left) == id(p)
 
         print("Tree before")
-        p.print_tree()
+        p.print_tree(event.key)
+
         print(f"Handle circle event: {p_prev.site} - {p.site} - {p_next.site}")
         print(f"Sweep line position: {event.key}")
       
@@ -57,7 +58,6 @@ def fortunes(points: list[Point]) -> Edge:
 
         # Replace the middle leaf with the correct subtree ? 
         # we talk to kim about this # TODO: Remove
-        site = p_prev.site
         grand_parent.replace_child(parent, parent.right if p_is_left_child else parent.left)
         # TODO: Remove
         parent.left = None
@@ -66,21 +66,28 @@ def fortunes(points: list[Point]) -> Edge:
         #   p.parent.parent.right = p.parent.left
         #   p.parent.left.parent = p.parent.parent
         node = grand_parent
-        # print(f"|________node___________| : {node.arc_points[0], node.arc_points[1]}")
-        
-        while node.arc_points[0] != p.site and node.arc_points[1] != p.site: # TODO: Try without the arc_points[1] stuff
-            # print(f"node : {node.arc_points[0], node.arc_points[1]}")
-            node = node.parent
-        if node.arc_points[0] == p.site:
-            # print("Arc point equals site: ", node.arc_points[0], p.site)
-            node.arc_points[0] = site
-        elif node.arc_points[1] == p.site: # TODO: Make nicer
-            # print("Arc point equals site: ", node.arc_points[1], p.site)
-            node.arc_points[1] = site
-        else:
-            raise ValueError("The leaf is not in the tree")
+        if p_is_left_child:
+            while node.arc_points[0] != p_prev.site or node.arc_points[1] != p.site:
+                node = node.parent
+            node.arc_points[1] = p_next.site
+        else: 
+            while node.arc_points[0] != p.site or node.arc_points[1] != p_next.site:
+                node = node.parent
+            node.arc_points[0] = p_prev.site
+        # while node.arc_points[0] != p.site and node.arc_points[1] != p.site: # TODO: Try without the arc_points[1] stuff
+        #     # print(f"node : {node.arc_points[0], node.arc_points[1]}")
+        #     node = node.parent
+
+        # if node.arc_points[0] == p.site:
+        #     # print("Arc point equals site: ", node.arc_points[0], p.site)
+        #     node.arc_points[0] = site
+        # elif node.arc_points[1] == p.site: # TODO: Make nicer
+        #     # print("Arc point equals site: ", node.arc_points[1], p.site)
+        #     node.arc_points[1] = site
+        # else:
+        #     raise ValueError("The leaf is not in the tree")
+
         top_parent = node
-        # node.arc_points[0] = site
         
 
 
@@ -114,6 +121,7 @@ def fortunes(points: list[Point]) -> Edge:
 
         new_edge = Edge(Point(vertex.x, vertex.y), vertex.edge, None, None, None)  # The edge of the new breakpoint
         vertex.edge.twin = new_edge
+        print("new edge origin on init: ", new_edge.origin)
         # TODO: check if all the pointers are set correctly
         if p_is_left_child:  # Parent is the breakpoint coming from the right
             print("Parent is coming from right")
@@ -143,16 +151,25 @@ def fortunes(points: list[Point]) -> Edge:
         print("Grand parent edge origin: ", top_parent.edge.origin)
         print("Grand parent twin edge origin: ", top_parent.edge.twin.origin)
         top_parent.edge = new_edge
+        print("Top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
 
         # TODO: Make less hacky
         if dcel is None:
             dcel = vertex.edge
 
+        
+        print("Tree before after")
+        p_prev.print_tree(event.key)        
+
         # Step 3
         if p_prev_prev is not None:
-            check_circle_event(p_prev_prev, p_prev, p_next, event.key, event_queue)
+            check_circle_event_for_circle_event(p_next, p_prev, p_prev_prev, center_of_circle, event.key, event_queue, False)            
         if p_next_next is not None:
-            check_circle_event(p_prev, p_next, p_next_next, event.key, event_queue)
+            check_circle_event_for_circle_event(p_prev, p_next, p_next_next, center_of_circle, event.key, event_queue, True)
+        print("After check circle events: top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
+        print("Tree after")
+        p_prev.print_tree(event.key)        
+
 
     sweep_line_y = 0
     while not event_queue.is_empty():
@@ -176,6 +193,7 @@ def fortunes(points: list[Point]) -> Edge:
             print()
 
 
+    sweep_line_y -= 10
     status.update_breakpoints(sweep_line_y)
 
     # TODO: Step 7
