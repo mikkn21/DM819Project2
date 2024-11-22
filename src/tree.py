@@ -53,6 +53,16 @@ class Node:
         if self.right is not None and isinstance(self.right, Node):
             self.right.update_breakpoints(sweep_line_y)
 
+    def calc_line(self, sweep_line_y: float) -> tuple[float, float]:
+        """Returns (a, b) of the line (ax + b) that the breakpoint is on"""
+        # TODO: If the information is available via the edge, do it with that instead.
+        bp1 = self.find_breakpoint(sweep_line_y)
+        bp2 = self.find_breakpoint(sweep_line_y - 1, False) # Simulate that the sweep line has passed a bit
+        # TODO: Make more robust to handle vertical lines and divide by 0
+        a = (bp2.y - bp1.y) / (bp2.x - bp1.x)
+        b = bp1.y - a * bp1.x
+        return a, b
+
     def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue) -> None:
         # TODO: Don't base this on the x-coordinate of the first point
         #       But rather base it on the breakpoint between both the points in break_point
@@ -249,13 +259,19 @@ class Leaf:
         indent = "  " * level
         print(f"{indent}Leaf: site={self.site}")
 
+def find_intersection(a1: float, b1: float, a2: float, b2: float) -> Point:
+    # TODO: Handle a1 == a2
+    x = (b2 - b1) / (a1 - a2)
+    y = a1 * x + b1
+    return Point(x, y)
 
-def check_circle_event_for_circle_event(start_arc: Leaf, middle_arc: Leaf, end_arc: Leaf, bp : Point, sweep_line_y : float,  event_queue: EventQueue, start_is_left_most: bool) -> None:
+def check_circle_event_for_circle_event(start_arc: Leaf, middle_arc: Leaf, end_arc: Leaf, start_middle_node : Node, sweep_line_y : float,  event_queue: EventQueue, start_is_left_most: bool) -> None:
     print("Check circle event for circle event")
     p, r = define_circle(start_arc.site, middle_arc.site, end_arc.site)
     if p is None:
         print("No circle event 1")
         return
+    
     node = middle_arc.parent
     if not start_is_left_most:
         while node.arc_points[0] != end_arc.site or node.arc_points[1] != middle_arc.site:
@@ -263,7 +279,7 @@ def check_circle_event_for_circle_event(start_arc: Leaf, middle_arc: Leaf, end_a
     else: 
         while node.arc_points[0] != middle_arc.site or node.arc_points[1] != end_arc.site:
             node = node.parent
-          
+    middle_end_node = node
     # node = middle_arc.parent
     # if not start_is_left_most:
     #     while node.arc_points[0] != end_arc.site and node.arc_points[1] != middle_arc.parent:
@@ -271,25 +287,39 @@ def check_circle_event_for_circle_event(start_arc: Leaf, middle_arc: Leaf, end_a
     # else:
     #     while node.arc_points[0] != middle_arc.site and node.arc_points[1] != end_arc.parent:
     #         node = node.parent
-
-    other_bp = node.find_breakpoint(sweep_line_y)
-    lowest_y = p.y - r    
+    a1, b1 = start_middle_node.calc_line(sweep_line_y)
+    a2, b2 = middle_end_node.calc_line(sweep_line_y)
     
-    if lowest_y < sweep_line_y:
-        if not start_is_left_most and other_bp.x <= p.x <= bp.x:
-            event = CircleEvent(middle_arc, lowest_y)
-            middle_arc.circle_event = event
-            event_queue.add(event)
-            print("Added circle event, start is NOT left most")
-        elif start_is_left_most and bp.x <= p.x <= other_bp.x:
-            event = CircleEvent(middle_arc, lowest_y)
-            middle_arc.circle_event = event
-            event_queue.add(event)
-            print("Added circle event, start is left most")
-        else: 
-            print("No circle event 2")
+    intersection = find_intersection(a1, b1, a2, b2)
+    
+    if intersection.y < start_middle_node.find_breakpoint(sweep_line_y).y and intersection.y < middle_end_node.find_breakpoint(sweep_line_y).y: 
+        lowest_y = p.y - r    
+        event = CircleEvent(middle_arc, lowest_y)
+        middle_arc.circle_event = event
+        event_queue.add(event)
+        print("Added circle event")
     else: 
-        print("Circle event is above the sweep line") 
+        print("Circle event is above the breakpoints") 
+
+    # other_bp = start_middle_node.find_breakpoint(sweep_line_y)
+    # lowest_y = p.y - r    
+    
+    
+    # if lowest_y < sweep_line_y:
+    #     if not start_is_left_most and other_bp.x <= p.x <= bp.x:
+    #         event = CircleEvent(middle_arc, lowest_y)
+    #         middle_arc.circle_event = event
+    #         event_queue.add(event)
+    #         print("Added circle event, start is NOT left most")
+    #     elif start_is_left_most and bp.x <= p.x <= other_bp.x:
+    #         event = CircleEvent(middle_arc, lowest_y)
+    #         middle_arc.circle_event = event
+    #         event_queue.add(event)
+    #         print("Added circle event, start is left most")
+    #     else: 
+    #         print("No circle event 2")
+    # else: 
+    #     print("Circle event is above the sweep line") 
     # TODO: I have a theory than if lowest_y == sweep_line_y, we need to create multiple edges
     #       from the center of the circle.
     

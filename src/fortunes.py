@@ -164,9 +164,9 @@ def fortunes(points: list[Point]) -> Edge:
 
         # Step 3
         if p_prev_prev is not None:
-            check_circle_event_for_circle_event(p_next, p_prev, p_prev_prev, center_of_circle, event.key, event_queue, False)            
+            check_circle_event_for_circle_event(p_next, p_prev, p_prev_prev, top_parent, event.key, event_queue, False)            
         if p_next_next is not None:
-            check_circle_event_for_circle_event(p_prev, p_next, p_next_next, center_of_circle, event.key, event_queue, True)
+            check_circle_event_for_circle_event(p_prev, p_next, p_next_next, top_parent, event.key, event_queue, True)
         # print("After check circle events: top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
         print("Tree after")
         p_prev.print_tree(event.key)        
