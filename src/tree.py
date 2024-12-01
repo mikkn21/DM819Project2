@@ -45,6 +45,18 @@ class Node:
     arc_points: list[Point]
     edge: Edge # Pointer in the doubley connected edge list 
 
+
+    def find_ancestor(self, left_arc_point: Point, right_arc_point: Point) -> Node:
+        """
+        finds the inner node that is the ancestor of the two arcs
+        Precondition: The ancestor exists.
+        """
+        if self.arc_points[0] == left_arc_point and self.arc_points[1] == right_arc_point:
+            return self
+        else:
+            return self.parent.find_ancestor(left_arc_point, right_arc_point)
+        
+
     def update_breakpoints(self, sweep_line_y: float) -> None:
         print("Find breakpoint")
         self.find_breakpoint(sweep_line_y)
@@ -57,7 +69,7 @@ class Node:
         """Returns (a, b) of the line (ax + b) that the breakpoint is on"""
         # TODO: If the information is available via the edge, do it with that instead.
         bp1 = self.find_breakpoint(sweep_line_y)
-        bp2 = self.find_breakpoint(sweep_line_y - 1, False) # Simulate that the sweep line has passed a bit
+        bp2 = self.find_breakpoint(sweep_line_y - 100, False) # Simulate that the sweep line has passed a bit
         # TODO: Make more robust to handle vertical lines and divide by 0
         a = (bp2.y - bp1.y) / (bp2.x - bp1.x)
         b = bp1.y - a * bp1.x
@@ -172,20 +184,20 @@ class Leaf:
         node_left.edge.twin = node_parent.edge 
 
         # Step 5
-        # consecutive arcs to the right of the new arc
+        # consecutive arcs to the right of the new arc: p_i (us), p_j, p_k
         p_i = node_parent.left.right
         p_j = p_i.next_leaf()
         if p_j is None:
             raise ValueError("p_j next is None but this should not be possible")
         p_k = p_j.next_leaf()
         if p_k is not None:
-            check_circle_event_for_site_event(p_i, p_j, p_k, event_queue, sweep_line_y, True)
+            check_circle_event_for_site_event(p_i, p_j, p_k, event_queue, sweep_line_y)
         else:
             # print("p_k in next is None")
             # p_i.print_tree()
             pass
 
-        # consecutive arcs to the left of the new arc
+        # consecutive arcs to the left of the new arc: p_k, p_j, p_i (us) 
         p_i = node_parent.left.right
         p_j = p_i.prev_leaf()
         if p_j is None:
@@ -193,11 +205,10 @@ class Leaf:
             raise ValueError("p_j prev is None but this should not be possible")
         p_k = p_j.prev_leaf()
         if p_k is not None:
-            check_circle_event_for_site_event(p_i, p_j, p_k, event_queue, sweep_line_y, False)       
+            check_circle_event_for_site_event(p_k, p_j, p_i, event_queue, sweep_line_y)  
         else:
             # print("p_k in prev is None")
             pass
-        
     
     def right_most(self) -> Leaf:
         return self
@@ -259,78 +270,22 @@ class Leaf:
         indent = "  " * level
         print(f"{indent}Leaf: site={self.site}")
 
+    def print_parabola(self, sweep_line_y: float): 
+        #  y1 = ((x - h1) ** 2) / (2 * (k1 - b)) + (k1 + b) / 2
+        print(f" y = ((x - {self.site.x:.2f})^2) / (2 * ({self.site.y:.2f} - {sweep_line_y:.2f})) + ({self.site.y:.2f} + {sweep_line_y:.2f}) / 2")
+
 def find_intersection(a1: float, b1: float, a2: float, b2: float) -> Point:
     # TODO: Handle a1 == a2
     x = (b2 - b1) / (a1 - a2)
     y = a1 * x + b1
     return Point(x, y)
 
-def check_circle_event_for_circle_event(start_arc: Leaf, middle_arc: Leaf, end_arc: Leaf, start_middle_node : Node, sweep_line_y : float,  event_queue: EventQueue, start_is_left_most: bool) -> None:
-    print("Check circle event for circle event")
-    p, r = define_circle(start_arc.site, middle_arc.site, end_arc.site)
-    if p is None:
-        print("No circle event 1")
-        return
-    
-    node = middle_arc.parent
-    if not start_is_left_most:
-        while node.arc_points[0] != end_arc.site or node.arc_points[1] != middle_arc.site:
-            node = node.parent
-    else: 
-        while node.arc_points[0] != middle_arc.site or node.arc_points[1] != end_arc.site:
-            node = node.parent
-    middle_end_node = node
-    # node = middle_arc.parent
-    # if not start_is_left_most:
-    #     while node.arc_points[0] != end_arc.site and node.arc_points[1] != middle_arc.parent:
-    #         node = node.parent
-    # else:
-    #     while node.arc_points[0] != middle_arc.site and node.arc_points[1] != end_arc.parent:
-    #         node = node.parent
-    a1, b1 = start_middle_node.calc_line(sweep_line_y)
-    a2, b2 = middle_end_node.calc_line(sweep_line_y)
-    
-    intersection = find_intersection(a1, b1, a2, b2)
-    
-    if intersection.y < start_middle_node.find_breakpoint(sweep_line_y).y and intersection.y < middle_end_node.find_breakpoint(sweep_line_y).y: 
-        lowest_y = p.y - r    
-        event = CircleEvent(middle_arc, lowest_y)
-        middle_arc.circle_event = event
-        event_queue.add(event)
-        print("Added circle event")
-    else: 
-        print("Circle event is above the breakpoints") 
-
-    # other_bp = start_middle_node.find_breakpoint(sweep_line_y)
-    # lowest_y = p.y - r    
-    
-    
-    # if lowest_y < sweep_line_y:
-    #     if not start_is_left_most and other_bp.x <= p.x <= bp.x:
-    #         event = CircleEvent(middle_arc, lowest_y)
-    #         middle_arc.circle_event = event
-    #         event_queue.add(event)
-    #         print("Added circle event, start is NOT left most")
-    #     elif start_is_left_most and bp.x <= p.x <= other_bp.x:
-    #         event = CircleEvent(middle_arc, lowest_y)
-    #         middle_arc.circle_event = event
-    #         event_queue.add(event)
-    #         print("Added circle event, start is left most")
-    #     else: 
-    #         print("No circle event 2")
-    # else: 
-    #     print("Circle event is above the sweep line") 
-    # TODO: I have a theory than if lowest_y == sweep_line_y, we need to create multiple edges
-    #       from the center of the circle.
-    
-
-
-def check_circle_event_for_site_event(start_arc: Leaf, middle_arc: Leaf, end_arc: Leaf, event_queue: EventQueue, sweep_line_y: float, is_left_most : bool) -> None:
+def check_circle_event_for_site_event(left_arc: Leaf, middle_arc: Leaf, right_arc: Leaf, event_queue: EventQueue, sweep_line_y: float) -> None:
     """
     Check the triple of consecutive arcs where the me_arc is the left arc or right arc to see if the breakpoints converge
     """
     print("Check circle event for site event")
-    p, r = define_circle(start_arc.site, middle_arc.site, end_arc.site)
+    p, r = define_circle(left_arc.site, middle_arc.site, right_arc.site)
     if p is None:
         print("No circle event")
         print()
@@ -339,22 +294,14 @@ def check_circle_event_for_site_event(start_arc: Leaf, middle_arc: Leaf, end_arc
     lowest_y = p.y - r    
     
     if lowest_y < sweep_line_y:
-        if is_left_most and p.x > start_arc.site.x:
-            event = CircleEvent(middle_arc, lowest_y)
-            middle_arc.circle_event = event 
-            print("added circle event")
-            event_queue.add(event)
-        elif not is_left_most and p.x < start_arc.site.x:
-            event = CircleEvent(middle_arc, lowest_y)
-            middle_arc.circle_event = event
-            print("added circle event")
-            event_queue.add(event)
-        else :
-            print("No circle event")
-            print()
-            return
+        event = CircleEvent(middle_arc, lowest_y)
+        middle_arc.circle_event = event 
+        print("added circle event")
+        print(f"left: {left_arc.site}, middle: {middle_arc.site}, right: {right_arc.site}, center: {p}")
+        event_queue.add(event)
     else:
         print("Circle event is above the sweep line")
+
 
 
 

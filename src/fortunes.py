@@ -4,7 +4,6 @@ from events import *
 from tree import *
 from dcel import *
 import numpy as np
-from tree import check_circle_event_for_circle_event
 from find_breakpoint import define_circle
 from visualization.dcel_plot import print_decl
 
@@ -17,16 +16,6 @@ def fortunes(points: list[Point]) -> Edge:
     
     def handle_circle_event(event: CircleEvent) -> None:
         nonlocal dcel
-
-        # if event.middle_leaf.parent.left is None: # TODO: Remove. Just used for debugging
-        #     print("WE GOT AN OLD TREE")
-        #     return
-
-        # Step 1
-        # status.remove(event.middle_leaf)
-        # TODO: Assuming that the removed element is replaced all the way up the tree with the left-most leaf.
-        #       Also, assume that it's always the middle arc that is removed by a circle event, i.e., it always has a leaf to the left and to the right of it.
-        #       Check with Kim if this is correct
 
         # Get neighbour leaves
         p = event.middle_leaf
@@ -65,37 +54,15 @@ def fortunes(points: list[Point]) -> Edge:
         # POSSIBLE REPLACEMENT FOR THE LINE ABOVE:
         #   p.parent.parent.right = p.parent.left
         #   p.parent.left.parent = p.parent.parent
-        node = grand_parent
-        if p_is_left_child:
-            while node.arc_points[0] != p_prev.site or node.arc_points[1] != p.site:
-                node = node.parent
-            node.arc_points[1] = p_next.site
-        else: 
-            while node.arc_points[0] != p.site or node.arc_points[1] != p_next.site:
-                node = node.parent
-            node.arc_points[0] = p_prev.site
-        # while node.arc_points[0] != p.site and node.arc_points[1] != p.site: # TODO: Try without the arc_points[1] stuff
-        #     # print(f"node : {node.arc_points[0], node.arc_points[1]}")
-        #     node = node.parent
-
-        # if node.arc_points[0] == p.site:
-        #     # print("Arc point equals site: ", node.arc_points[0], p.site)
-        #     node.arc_points[0] = site
-        # elif node.arc_points[1] == p.site: # TODO: Make nicer
-        #     # print("Arc point equals site: ", node.arc_points[1], p.site)
-        #     node.arc_points[1] = site
-        # else:
-        #     raise ValueError("The leaf is not in the tree")
-
-        top_parent = node
         
+        top_parent = None
+        if p_is_left_child:
+            top_parent = grand_parent.find_ancestor(p_prev.site, p.site)
+            top_parent.arc_points[1] = p_next.site
+        else: 
+            top_parent = grand_parent.find_ancestor(p.site, p_next.site)
+            top_parent.arc_points[0] = p_prev.site
 
-
-        # print("")
-        # print(
-        #     f"Parent: {parent.arc_points[0]} {parent.arc_points[1]} {parent.edge.origin}, Top parent: {top_parent.arc_points[0], top_parent.arc_points[1], top_parent.edge.origin}"
-        # )
-        # print(" ")
 
         # Remove other circle events that use the arc
         # This can only be the next or previous leaves.
@@ -107,7 +74,6 @@ def fortunes(points: list[Point]) -> Edge:
             p_prev.site, p.site, p_next.site
         )
         if center_of_circle is None:  # TODO: REMOVE
-            # print(f"Circle center is None in handle_circle_event: {p_prev.site} - {p.site} - {p_next.site}")
             raise ValueError("Circle center is None in handle_circle_event")
         vertex = Vertex(
             center_of_circle.x, center_of_circle.y, None
@@ -164,9 +130,11 @@ def fortunes(points: list[Point]) -> Edge:
 
         # Step 3
         if p_prev_prev is not None:
-            check_circle_event_for_circle_event(p_next, p_prev, p_prev_prev, top_parent, event.key, event_queue, False)            
+            # TODO: Set top_parent as either left_middle_arc or right_middle_arc based on p_is_left_child
+            check_circle_event_for_site_event(p_prev_prev, p_prev, p_next, event_queue, event.key)
         if p_next_next is not None:
-            check_circle_event_for_circle_event(p_prev, p_next, p_next_next, top_parent, event.key, event_queue, True)
+            # TODO: Set top_parent as either left_middle_arc or right_middle_arc based on p_is_left_child
+            check_circle_event_for_site_event(p_prev, p_next, p_next_next, event_queue,  event.key)  
         # print("After check circle events: top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
         print("Tree after")
         p_prev.print_tree(event.key)        

@@ -8,6 +8,9 @@ class Point:
     x: float
     y: float
 
+    def distance(self, other: Point) -> float:
+        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+
     def is_close_to(self, other: Point, relative_diff: float = 1) -> bool:
         return math.isclose(self.x, other.x, rel_tol=relative_diff) and math.isclose(self.y, other.y, rel_tol=relative_diff)
 
