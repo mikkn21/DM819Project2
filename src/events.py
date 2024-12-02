@@ -39,9 +39,16 @@ class EventQueue:
         self.events = SortedListWithKey(events, key=lambda event: event.key)
         self.size = len(events)
 
-    def add(self, event: SiteEvent | CircleEvent) -> None:
+    def add_site(self, event: SiteEvent) -> None:
         self.events.add(event)
         self.size += 1
+    
+    def add_circle(self, event: CircleEvent) -> None:
+        if event not in self.events:
+            self.events.add(event)
+            self.size += 1
+        else:
+            print("Event already in queue")
 
     def pop(self) -> SiteEvent | CircleEvent:
         """
