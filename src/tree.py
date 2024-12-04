@@ -105,14 +105,19 @@ class Node:
         """
         return self.right.right_most()  # Assume all nodes have a right child
 
-    def print_subtree(self, level, sweep_line_y: float):
+    def print_subtree(self, level):
         indent = "  " * level
         print(f"{indent}Node: arc_points={self.arc_points}, edge={self.edge}")
         if self.left is not None:
-            self.left.print_subtree(level + 1, sweep_line_y)
+            self.left.print_subtree(level + 1)
         if self.right is not None:
-            self.right.print_subtree(level + 1, sweep_line_y)
+            self.right.print_subtree(level + 1)
 
+    def find_parent(self, left_arc_point: Point, right_arc_point: Point) -> Node:
+        node = self
+        while (node.arc_points[0] != left_arc_point or node.arc_points[1] != right_arc_point):
+            node = node.parent
+        return node
 
 @dataclass
 class Leaf:
@@ -173,8 +178,8 @@ class Leaf:
         p_j = p_i.next_leaf()
         p_k = p_j.next_leaf()
         if p_k is not None:
-            check_circle_event_for_site_event(
-                p_i, p_j, p_k, event_queue, sweep_line_y, True
+            check_circle_event(
+                p_i, p_j, p_k, node_parent, None, sweep_line_y, event_queue
             )
 
         # consecutive arcs to the left of the new arc
@@ -182,8 +187,8 @@ class Leaf:
         p_j = p_i.prev_leaf()
         p_k = p_j.prev_leaf()
         if p_k is not None:
-            check_circle_event_for_site_event(
-                p_i, p_j, p_k, event_queue, sweep_line_y, False
+            check_circle_event(
+                p_k, p_j, p_i, None, None, sweep_line_y, event_queue
             )
 
     def right_most(self) -> Leaf:
@@ -195,8 +200,8 @@ class Leaf:
             root = root.parent
         return root
 
-    def print_tree(self, sweep_line_y: float):
-        self.get_root().print_subtree(0, sweep_line_y)
+    def print_tree(self):
+        self.get_root().print_subtree(0)
 
     def copy(self) -> Leaf:
         return Leaf(self.site, self.parent, self.circle_event)
@@ -237,36 +242,27 @@ class Leaf:
 
 
 def check_circle_event(
-    start: Leaf,
-    middle: Leaf,
-    end: Leaf,
-    start_middle_node: Node,
+    left_arc: Leaf,
+    middle_arc: Leaf,
+    right_arc: Leaf,
+    left_middle_node: Node | None,
+    middle_end_node: Node | None,
     sweep_line_y: float,
     event_queue: EventQueue,
-    start_is_left_most: bool,
 ) -> None:
-    p, r = define_circle(start.site, middle.site, end.site)
+    p, r = define_circle(left_arc.site, middle_arc.site, right_arc.site)
     if p is None:
         return
 
-    # TODO Make a function
-    node = middle.parent
-    if not start_is_left_most:
-        while (
-            node.arc_points[0] != end.site or node.arc_points[1] != middle.site
-        ):
-            node = node.parent
-    else:
-        while (
-            node.arc_points[0] != middle.site or node.arc_points[1] != end.site
-        ):
-            node = node.parent
-    middle_end_node = node
+    if left_middle_node is None:
+        left_middle_node = left_arc.parent.find_parent(left_arc.site, middle_arc.site)
+    if middle_end_node is None:
+        middle_end_node = middle_arc.parent.find_parent(middle_arc.site, right_arc.site)
 
-    if start_middle_node.bp_going_towards(sweep_line_y, p) and middle_end_node.bp_going_towards(sweep_line_y, p):
+    if left_middle_node.bp_going_towards(sweep_line_y, p) and middle_end_node.bp_going_towards(sweep_line_y, p):
         lowest_y = p.y - r
-        event = CircleEvent(middle, lowest_y)
-        middle.circle_event = event
+        event = CircleEvent(middle_arc, lowest_y)
+        middle_arc.circle_event = event
         event_queue.add(event)
 
 

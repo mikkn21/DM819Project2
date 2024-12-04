@@ -69,10 +69,10 @@ def dcel_plot(init_edge: Edge, sites: list[Point]) -> None:
     min_y = min([v[1] for v in coordinates])
     padding = 5
     
-    max_y = 150
+    max_y = 250
     max_x = 150
-    min_x = 100
-    min_y = 50
+    min_x = -100
+    min_y = -100
     plt.xlim(min_x - padding, max_x + padding)
     plt.ylim(min_y - padding, max_y + padding)
     plt.xlabel("X-axis")

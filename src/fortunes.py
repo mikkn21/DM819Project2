@@ -4,7 +4,7 @@ from events import *
 from tree import *
 from dcel import *
 import numpy as np
-from tree import check_circle_event_for_circle_event
+from tree import check_circle_event
 from find_breakpoint import define_circle
 from visualization.dcel_plot import print_decl
 
@@ -39,7 +39,7 @@ def fortunes(points: list[Point]) -> Edge:
         p_is_left_child = id(parent.left) == id(p)
 
         print("Tree before")
-        p.print_tree(event.key)
+        p.print_tree()
 
         print(f"Handle circle event: {p_prev.site} - {p.site} - {p_next.site}")
         print(f"Sweep line position: {event.key}")
@@ -159,17 +159,18 @@ def fortunes(points: list[Point]) -> Edge:
 
         
         print("Tree before after")
-        p_prev.print_tree(event.key)    
+        p_prev.print_tree()    
         print()    
 
         # Step 3
         if p_prev_prev is not None:
-            check_circle_event_for_circle_event(p_next, p_prev, p_prev_prev, top_parent, event.key, event_queue, False)            
+            check_circle_event(p_prev_prev, p_prev, p_next, None, None, event.key, event_queue)
+          
         if p_next_next is not None:
-            check_circle_event_for_circle_event(p_prev, p_next, p_next_next, top_parent, event.key, event_queue, True)
-        # print("After check circle events: top parent: ", top_parent.arc_points, " new edge origin: ", top_parent.edge.origin)
+            check_circle_event(p_prev, p_next, p_next_next, None, None, event.key, event_queue)  
+        
         print("Tree after")
-        p_prev.print_tree(event.key)        
+        p_prev.print_tree()        
 
 
     sweep_line_y = 0
