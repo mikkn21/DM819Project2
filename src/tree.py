@@ -5,7 +5,7 @@ import numpy as np
 from dcel import Edge
 from point import Point
 from events import CircleEvent, EventQueue
-from find_breakpoint import find_breakpoint, define_circle
+from geometry import find_breakpoint, define_circle
 
 
 # Binary search tree
@@ -167,8 +167,8 @@ class Leaf:
 
         # Step 4: Edges
         breakpoint = node_parent.find_breakpoint(sweep_line_y, False)
-        node_parent.edge = Edge(breakpoint, None, None, None, None)
-        node_left.edge = Edge(breakpoint.copy(), None, None, None, None)
+        node_parent.edge = Edge(breakpoint, None, None, None)
+        node_left.edge = Edge(breakpoint.copy(), None, None, None)
         node_parent.edge.twin = node_left.edge
         node_left.edge.twin = node_parent.edge
 
@@ -264,42 +264,3 @@ def check_circle_event(
         event = CircleEvent(middle_arc, lowest_y)
         middle_arc.circle_event = event
         event_queue.add(event)
-
-
-def check_circle_event_for_site_event(
-    start_arc: Leaf,
-    middle_arc: Leaf,
-    end_arc: Leaf,
-    event_queue: EventQueue,
-    sweep_line_y: float,
-    is_left_most: bool,
-) -> None:
-    """
-    Check the triple of consecutive arcs where the me_arc is the left arc or right arc to see if the breakpoints converge
-    """
-    print("Check circle event for site event")
-    p, r = define_circle(start_arc.site, middle_arc.site, end_arc.site)
-    if p is None:
-        print("No circle event")
-        print()
-        return  # not circle event
-
-    lowest_y = p.y - r
-
-    if lowest_y < sweep_line_y:
-        if is_left_most and p.x > start_arc.site.x:
-            event = CircleEvent(middle_arc, lowest_y)
-            middle_arc.circle_event = event
-            print("added circle event")
-            event_queue.add(event)
-        elif not is_left_most and p.x < start_arc.site.x:
-            event = CircleEvent(middle_arc, lowest_y)
-            middle_arc.circle_event = event
-            print("added circle event")
-            event_queue.add(event)
-        else:
-            print("No circle event")
-            print()
-            return
-    else:
-        print("Circle event is above the sweep line")

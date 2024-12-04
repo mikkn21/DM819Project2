@@ -10,7 +10,7 @@ def define_circle(left: Point, middle: Point, right: Point):
     In case the 3 points form a line, returns (None, infinity).
     """
     print("In Define circle for the points: ", left, middle, right)
-    p1, p2, p3 = [left.x, left.y], [middle.x, middle.y], [right.x, right.y] # TODO: Avoid redefining the points
+    p1, p2, p3 = [left.x, left.y], [middle.x, middle.y], [right.x, right.y] 
     temp = p2[0] * p2[0] + p2[1] * p2[1]
     bc = (p1[0] * p1[0] + p1[1] * p1[1] - temp) / 2
     cd = (temp - p3[0] * p3[0] - p3[1] * p3[1]) / 2
@@ -32,8 +32,7 @@ def find_breakpoint(site1: Point, site2: Point, sweep_line_y: float) -> list[Poi
     h1, k1 = site1
     h2, k2 = site2
     b = sweep_line_y
-    
-    
+     
     # Relative tolerance for math.isclose()
     rel_tol = 1e-9
 
@@ -44,22 +43,14 @@ def find_breakpoint(site1: Point, site2: Point, sweep_line_y: float) -> list[Poi
 
     # Site1's parabola is a vertica line on the sweep line
     elif math.isclose(k1, b, rel_tol=rel_tol):
-        if k2 - b <= 0:
-            raise ValueError("Site2's parabola is below the sweep line") # TODO: Check if this can actually happen
         y_value = ((h1 - h2) ** 2) / (2 * (k2 - b)) + (k2 + b) / 2
         return [Point(h1, y_value)]
     # Site2's parabola is a vertical line on the sweep line 
     elif math.isclose(k2, b, rel_tol=rel_tol):
-        if k1 - b <= 0:
-            raise ValueError("Site 1's parabola does not exist above the sweep line") # TODO: Check if this can actually happen
         y_value = ((h2 - h1) ** 2) / (2 * (k1 - b)) + (k1 + b) / 2
         return [Point(h2, y_value)]
     # Both parabolas are valid
     else:
-        if k1 - b <= 0 or k2 - b <= 0:
-            raise ValueError("One of the parabolas does not exist above the sweep line") # TODO: check if this can actually happen
-
-        
         y1 = ((x - h1) ** 2) / (2 * (k1 - b)) + (k1 + b) / 2
         y2 = ((x - h2) ** 2) / (2 * (k2 - b)) + (k2 + b) / 2
         intersection_points = sp.solve(y1 - y2, x)
