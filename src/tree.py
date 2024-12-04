@@ -322,15 +322,15 @@ def check_circle_event_for_circle_event(
             node = node.parent
     middle_end_node = node
 
-    a1, b1 = start_middle_node.calc_line(sweep_line_y)
-    a2, b2 = middle_end_node.calc_line(sweep_line_y)
-
-    intersection = find_intersection(a1, b1, a2, b2)
+    # a1, b1 = start_middle_node.calc_line(sweep_line_y)
+    # a2, b2 = middle_end_node.calc_line(sweep_line_y)
+    #
+    # intersection = find_intersection(a1, b1, a2, b2)
 
     # if intersection.y < start_middle_node.find_breakpoint(sweep_line_y).y and intersection.y < middle_end_node.find_breakpoint(sweep_line_y).y:
     if start_middle_node.bp_going_towards(
-        sweep_line_y, intersection
-    ) and middle_end_node.bp_going_towards(sweep_line_y, intersection):
+        sweep_line_y, p
+    ) and middle_end_node.bp_going_towards(sweep_line_y, p):
         lowest_y = p.y - r
         event = CircleEvent(middle_arc, lowest_y)
         middle_arc.circle_event = event
