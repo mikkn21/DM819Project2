@@ -2,79 +2,114 @@ import sys
 import matplotlib.pyplot as plt
 from dcel import *
 from point import Point
+from dataclasses import dataclass
 
+@dataclass
+class Box:
+    min_x: float
+    max_x: float
+    min_y: float
+    max_y: float
+
+    def __str__(self) -> str:
+        return f"Box({self.min_x}, {self.max_x}, {self.min_y}, {self.max_y})"
 
 def plot_edges(edges: set[Edge]) -> None:
     for edge in edges:
-        print("plt edge")
         point_to = edge.next.origin if edge.next != None else edge.twin.origin
         color = "black"
         plt.annotate(
             "",
             xytext=(edge.origin.x, edge.origin.y),
             xy=(point_to.x, point_to.y),
-            arrowprops=dict(arrowstyle="->", lw=1.5, color=color),
+            arrowprops=dict(arrowstyle="-", lw=1.5, color=color),
         )
 
 
 def plot_vertices(vertices: set[Vertex]) -> None:
     for vertex in vertices:
-        print("plt vertex")
-        plt.plot(vertex.x, vertex.y, "bo" if isinstance(vertex, Point) else "ko")
+        if isinstance(vertex, Vertex):
+            plt.plot(vertex.x, vertex.y, "bo" if isinstance(vertex, Point) else "ko")
 
-def print_decl(init_edge: Edge, sites: list[Point]) -> None:
-    print("Initial edge:")
-    print(init_edge)
-    print()
-    edges = get_all_edges(init_edge)
-    vertices = get_all_vertices(edges)
-    print("Edges:")
+def bind_to_box(edges: set[Edge], box: Box) -> None:
     for edge in edges:
-        print(edge)
-    print()
-    print("Vertices:")
-    for vertex in vertices:
-        print(vertex)
+        if isinstance(edge.twin.origin, Point):
+            intersections = find_edge_intersections(edge, box)
+            intersection = min(intersections, key=lambda p: euclidean_dist(p, edge.origin))
+            edge.twin.origin = intersection
+
+def find_edge_intersections(edge: Edge, box: Box) -> list[Point]:
+    a,b = calculate_edge_line(edge) 
+        
+    direction = edge.twin.origin - edge.origin
+
+    intersections = []
+
+    if direction.x > 0:
+        intersections.append(Point(box.max_x, a * box.max_x + b))
+    elif direction.x < 0:
+        intersections.append(Point(box.min_x, a * box.min_x + b))
+
+    if direction.y > 0:
+        intersections.append(Point((box.max_y - b) / a, box.max_y))
+    elif direction.y < 0:
+        intersections.append(Point((box.min_y - b) / a, box.min_y))
+        
+    return intersections
+
+         
+def calculate_edge_line(edge: Edge) -> tuple[float, float]:
+    x1 = edge.origin.x
+    y1 = edge.origin.y
+    x2 = edge.twin.origin.x
+    y2 = edge.twin.origin.y
+    
+    a = (y2 - y1) / (x2 - x1)
+    b = y1 - a * x1
+    return a, b
+
+def euclidean_dist(a: Point, b: Vertex) -> float:
+    return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5
+
 
 def dcel_plot(init_edge: Edge, sites: list[Point]) -> None:
     plt.figure()
 
     edges = get_all_edges(init_edge)
     vertices = get_all_vertices(edges)
-    plot_edges(edges)
-    plot_vertices(vertices)
 
     for site in sites:
         plt.plot(site.x, site.y, "ro")
 
-    print()
-    print("Drawing DCEL...")
-    # plt_draw(init_edge, edges, vertices)
-    # plt_draw_new(init_edge, 0, 5)
-    print("Initial edge:")
-    print(init_edge)
-    print()
     print("Edges:")
     for edge in edges:
-        print(edge)
+        print(f"({edge.origin.x:2f}, {edge.origin.y:2f}), {"inf" if isinstance(edge.twin.origin, Point) else ""}({edge.twin.origin.x:2f}, {edge.twin.origin.y:2f})")
     print()
     print("Vertices:")
     for vertex in vertices:
-        print(vertex)
+        if isinstance(vertex, Vertex):
+            print(f"({vertex.x:2f}, {vertex.y:.2f})")
 
-    coordinates = [(v.x, v.y) for v in vertices] + [(v.x, v.y) for v in sites]
+    coordinates = [(v.x, v.y) for v in vertices if isinstance(v, Vertex)] + [(v.x, v.y) for v in sites]
     max_x = max([v[0] for v in coordinates])
     min_x = min([v[0] for v in coordinates])
+    x_dist = max_x - min_x
+    max_x += x_dist * 0.1
+    min_x -= x_dist * 0.1
     max_y = max([v[1] for v in coordinates])
     min_y = min([v[1] for v in coordinates])
-    padding = 5
+    y_dist = max_y - min_y
+    max_y += y_dist * 0.1
+    min_y -= y_dist * 0.1
+
+    box = Box(min_x, max_x, min_y, max_y)
+
+    bind_to_box(edges, box)
+    plot_edges(edges)
+    plot_vertices(vertices)
     
-    max_y = 250
-    max_x = 150
-    min_x = -100
-    min_y = -100
-    plt.xlim(min_x - padding, max_x + padding)
-    plt.ylim(min_y - padding, max_y + padding)
+    plt.xlim(min_x, max_x)
+    plt.ylim(min_y, max_y)
     plt.xlabel("X-axis")
     plt.ylabel("Y-axis")
     plt.title("Result")
@@ -90,9 +125,7 @@ def get_all_edges(edge: Edge, visited: set[Edge] = None) -> list[Edge]:
     if visited is None:
         visited = set()
     if edge in visited:
-        print("Already visited", edge)
         return []
-    print(edge)
     visited.add(edge)
     edges = [edge]
     if edge.twin:

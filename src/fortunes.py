@@ -1,12 +1,9 @@
-import math
 from point import Point
 from events import *
 from tree import *
 from dcel import *
-import numpy as np
 from tree import check_circle_event
 from geometry import define_circle
-from visualization.dcel_plot import print_decl
 
 
 def fortunes(points: list[Point]) -> Edge:
@@ -92,8 +89,11 @@ def fortunes(points: list[Point]) -> Edge:
             handle_circle_event(event)
 
 
+    # We simulate the sweep line is a bit lower and
+    # update the breakpoint. This is necessary so that all
+    # infinite edges still have a direction.
     sweep_line_y -= 10
-    # status.update_breakpoints(sweep_line_y) # Force update all breakpoints by moving the sweep line down
+    status.update_breakpoints(sweep_line_y) # Force update all breakpoints by moving the sweep line down
 
     return dcel
 
