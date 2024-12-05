@@ -83,7 +83,7 @@ def dcel_plot(init_edge: Edge, sites: list[Point]) -> None:
 
     print("Edges:")
     for edge in edges:
-        print(f"({edge.origin.x:.2f}, {edge.origin.y:.2f}), {"inf" if isinstance(edge.twin.origin, Point) else ""}({edge.twin.origin.x:.2f}, {edge.twin.origin.y:.2f})")
+        print(f"{"inf" if isinstance(edge.twin.origin, Point) else ""}({edge.twin.origin.x:.2f}, {edge.twin.origin.y:.2f}), {"inf" if isinstance(edge.twin.origin, Point) else ""}({edge.twin.origin.x:.2f}, {edge.twin.origin.y:.2f})")
     print()
     print("Vertices:")
     for vertex in vertices:
