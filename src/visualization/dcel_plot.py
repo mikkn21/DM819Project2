@@ -18,12 +18,7 @@ def plot_edges(edges: set[Edge]) -> None:
     for edge in edges:
         point_to = edge.next.origin if edge.next != None else edge.twin.origin
         color = "black"
-        plt.annotate(
-            "",
-            xytext=(edge.origin.x, edge.origin.y),
-            xy=(point_to.x, point_to.y),
-            arrowprops=dict(arrowstyle="-", lw=1.5, color=color),
-        )
+        plt.plot([edge.origin.x, point_to.x], [edge.origin.y, point_to.y], color=color)
 
 
 def plot_vertices(vertices: set[Vertex]) -> None:
@@ -71,6 +66,11 @@ def calculate_edge_line(edge: Edge) -> tuple[float, float]:
 def euclidean_dist(a: Point, b: Vertex) -> float:
     return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5
 
+def min_max_with_padding(values: list[float], padding: float) -> tuple[float, float]:
+    max_val = max(values)
+    min_val = min(values)
+    diff = max_val - min_val
+    return min_val - diff * padding, max_val + diff * padding
 
 def dcel_plot(init_edge: Edge, sites: list[Point]) -> None:
     plt.figure()
@@ -83,30 +83,22 @@ def dcel_plot(init_edge: Edge, sites: list[Point]) -> None:
 
     print("Edges:")
     for edge in edges:
-        print(f"({edge.origin.x:2f}, {edge.origin.y:2f}), {"inf" if isinstance(edge.twin.origin, Point) else ""}({edge.twin.origin.x:2f}, {edge.twin.origin.y:2f})")
+        print(f"({edge.origin.x:.2f}, {edge.origin.y:.2f}), {"inf" if isinstance(edge.twin.origin, Point) else ""}({edge.twin.origin.x:.2f}, {edge.twin.origin.y:.2f})")
     print()
     print("Vertices:")
     for vertex in vertices:
         if isinstance(vertex, Vertex):
-            print(f"({vertex.x:2f}, {vertex.y:.2f})")
+            print(f"({vertex.x:.2f}, {vertex.y:.2f})")
 
     coordinates = [(v.x, v.y) for v in vertices if isinstance(v, Vertex)] + [(v.x, v.y) for v in sites]
-    max_x = max([v[0] for v in coordinates])
-    min_x = min([v[0] for v in coordinates])
-    x_dist = max_x - min_x
-    max_x += x_dist * 0.1
-    min_x -= x_dist * 0.1
-    max_y = max([v[1] for v in coordinates])
-    min_y = min([v[1] for v in coordinates])
-    y_dist = max_y - min_y
-    max_y += y_dist * 0.1
-    min_y -= y_dist * 0.1
+    min_x, max_x = min_max_with_padding([v[0] for v in coordinates], 0.1)
+    min_y, max_y = min_max_with_padding([v[1] for v in coordinates], 0.1)
 
     box = Box(min_x, max_x, min_y, max_y)
 
     bind_to_box(edges, box)
     plot_edges(edges)
-    plot_vertices(vertices)
+    # plot_vertices(vertices)
     
     plt.xlim(min_x, max_x)
     plt.ylim(min_y, max_y)

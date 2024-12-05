@@ -102,6 +102,5 @@ def delete_circle_event(leaf: Leaf, event_queue: EventQueue) -> None:
     Deletes the circle event on leaf from the event_queue if it exists.
     """
     if leaf.circle_event is not None:
-        print("Deleting a circle event because it's using the leaf")
         event_queue.remove(leaf.circle_event)
         leaf.circle_event = None
