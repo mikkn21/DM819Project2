@@ -81,11 +81,10 @@ def fortunes(points: list[Point]) -> Edge:
     while not event_queue.is_empty():
         event = event_queue.pop()
         if isinstance(event, SiteEvent):
-            sweep_line_y = event.site.y # TODO: Make prettier
+            sweep_line_y = event.site.y
             status.add(event.site, event.site.y)
         else:
-            event.middle_leaf.circle_event = None
-            sweep_line_y = event.key # TODO: Make prettier
+            sweep_line_y = event.key 
             handle_circle_event(event)
 
 
