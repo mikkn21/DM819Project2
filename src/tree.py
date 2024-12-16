@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from Timer import Timer
 from dcel import Edge
 from point import Point
 from events import CircleEvent, EventQueue
@@ -13,12 +14,15 @@ from geometry import find_breakpoint, define_circle
 class Tree:
     root: Node | Leaf | None
     event_queue: EventQueue
+    find_bp_timer : Timer = Timer()
+    step_5a_timer : Timer = Timer()
+    step_5b_timer : Timer = Timer()
 
     def add(self, site: Point, sweep_line_y: float) -> None:
         if self.root == None:
-            self.root = Leaf(site, None, None)  # P: HandleSiteEvent step 1
+            self.root = Leaf(site, None, None, self.find_bp_timer, self.step_5a_timer, self.step_5b_timer)  # P: HandleSiteEvent step 1
         else:
-            self.root._add(site, sweep_line_y, self.event_queue)
+            self.root._add(site, sweep_line_y, self.event_queue, self.find_bp_timer, self.step_5a_timer, self.step_5b_timer)
             if isinstance(self.root, Leaf):
                 self.root = self.root.get_root()
 
@@ -40,6 +44,9 @@ class Node:
     parent: Node | None
     arc_points: list[Point]
     edge: Edge  # Pointer in the doubley connected edge list
+    find_bp_timer : Timer = Timer()
+    step_5a_timer : Timer = Timer()
+    step_5b_timer : Timer = Timer()
 
     def update_breakpoints(self, sweep_line_y: float) -> None:
         self.find_breakpoint(sweep_line_y)
@@ -68,11 +75,11 @@ class Node:
                 return True
         return False
 
-    def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue) -> None:
+    def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue, t1 : Timer, t2: Timer, t3: Timer ) -> None:
         if site.x < self.find_breakpoint(sweep_line_y).x:
-            self.left._add(site, sweep_line_y, event_queue)
+            self.left._add(site, sweep_line_y, event_queue, t1, t2, t3)
         else:
-            self.right._add(site, sweep_line_y, event_queue)
+            self.right._add(site, sweep_line_y, event_queue, t1, t2, t3)
 
     def find_breakpoint(self, sweep_line_y: float, update_edge_origin: bool = True) -> Point: 
         bps = find_breakpoint(self.arc_points[0], self.arc_points[1], sweep_line_y)
@@ -123,9 +130,12 @@ class Node:
 class Leaf:
     site: Point
     parent: Node | None
-    circle_event: CircleEvent | None  # Pointer in event queue
+    circle_event: CircleEvent | None  # Pointer in event queue 
+    find_bp_timer : Timer = Timer()
+    step_5a_timer : Timer = Timer()
+    step_5b_timer : Timer = Timer()
 
-    def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue) -> None:
+    def _add(self, site: Point, sweep_line_y: float, event_queue: EventQueue, find_bp_timer: Timer, step_5a_timer: Timer, step_5b_timer : Timer) -> None:
         # P: HandleSiteEvent where this leaf is alpha
         # Step 2:
         # Remove circle event if it's there
@@ -166,7 +176,9 @@ class Leaf:
         node_left.left = copy_self
 
         # Step 4: Edges
+        find_bp_timer.start()
         breakpoint = node_parent.find_breakpoint(sweep_line_y, False)
+        find_bp_timer.stop()
         node_parent.edge = Edge(breakpoint, None, None, None)
         node_left.edge = Edge(breakpoint.copy(), None, None, None)
         node_parent.edge.twin = node_left.edge
@@ -174,6 +186,7 @@ class Leaf:
 
         # Step 5
         # consecutive arcs to the right of the new arc
+        step_5a_timer.start()
         p_i = node_parent.left.right
         p_j = p_i.next_leaf()
         p_k = p_j.next_leaf()
@@ -181,8 +194,10 @@ class Leaf:
             check_circle_event(
                 p_i, p_j, p_k, node_parent, None, sweep_line_y, event_queue
             )
+        step_5a_timer.stop()
 
         # consecutive arcs to the left of the new arc
+        step_5b_timer.start()
         p_i = node_parent.left.right
         p_j = p_i.prev_leaf()
         p_k = p_j.prev_leaf()
@@ -190,6 +205,7 @@ class Leaf:
             check_circle_event(
                 p_k, p_j, p_i, None, None, sweep_line_y, event_queue
             )
+        step_5b_timer.stop()
 
     def right_most(self) -> Leaf:
         return self

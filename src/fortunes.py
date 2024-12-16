@@ -1,3 +1,4 @@
+from Timer import Timer
 from point import Point
 from events import *
 from tree import *
@@ -8,8 +9,11 @@ from geometry import define_circle
 
 def fortunes(points: list[Point]) -> Edge:
     event_queue = EventQueue([SiteEvent(p) for p in points])
-
-    status = Tree(None, event_queue)
+    
+    find_bp_timer = Timer()
+    step_5a_timer = Timer()
+    step_5b_timer = Timer()
+    status = Tree(None, event_queue, find_bp_timer, step_5a_timer, step_5b_timer)
     dcel: Edge = None
     
     def handle_circle_event(event: CircleEvent) -> None:
@@ -76,24 +80,39 @@ def fortunes(points: list[Point]) -> Edge:
             check_circle_event(p_prev, p_next, p_next_next, None, None, event.key, event_queue)  
 
 
-
+    
+    site_event_timer = Timer() 
+    circle_event_timer = Timer()
+    update_timer = Timer()
     sweep_line_y = 0
     while not event_queue.is_empty():
         event = event_queue.pop()
         if isinstance(event, SiteEvent):
             sweep_line_y = event.site.y
+            site_event_timer.start() 
             status.add(event.site, event.site.y)
+            site_event_timer.stop()
         else:
             sweep_line_y = event.key 
+            circle_event_timer.start()
             handle_circle_event(event)
+            circle_event_timer.stop()
 
 
     # We simulate the sweep line is a bit lower and
     # update the breakpoint. This is necessary so that all
     # infinite edges still have a direction.
     sweep_line_y -= 10
+    update_timer.start()
     status.update_breakpoints(sweep_line_y) # Force update all breakpoints by moving the sweep line down
+    update_timer.stop()
 
+    print(f"Site event total time: {site_event_timer.get_total_time()} ")
+    print(f"Site circle total time: {circle_event_timer.get_total_time()} ")
+    print(f"update total time: {update_timer.get_total_time()} ")
+    print(f"Find breakpoint total time: {find_bp_timer.get_total_time()} ")
+    print(f"Step 5a total time: {step_5a_timer.get_total_time()} ")
+    print(f"Step 5b total time: {step_5b_timer.get_total_time()} ")
     return dcel
 
 def delete_circle_event(leaf: Leaf, event_queue: EventQueue) -> None:
