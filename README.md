@@ -14,6 +14,11 @@ To simplify the problem, we assume the input points are in *general position*. S
 
 As we assume the input is in general position, we do not have any *special cases* to consider.
 
+
+> [!Note]
+> For a more detailed description of the project and code, I recommend reading the [rapport](./dm819_part2.pdf).
+
+
 Visual results from testing the algorithm on different input point configurations:
 <p align="center">
   <img src="assets/result-big-data.jpg" alt="Image 1" width="49%" />
