@@ -16,7 +16,7 @@ As we assume the input is in general position, we do not have any *special cases
 
 
 > [!Note]
-> For a more detailed description of the project and code, I recommend reading the [rapport](./dm819_part2.pdf).
+> For a more detailed description of the project and code, I recommend reading the [report](./dm819_part2.pdf).
 
 
 Visual results from testing the algorithm on different input point configurations:
