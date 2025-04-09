@@ -14,6 +14,12 @@ To simplify the problem, we assume the input points are in *general position*. S
 
 As we assume the input is in general position, we do not have any *special cases* to consider.
 
+<p align="center">
+  <img src="assets/result-big-data.pdf" alt="Image 1" width="49%" />
+  <img src="assets/result-square.pdf" alt="Image 2" width="49%" />
+</p>
+
+
 > [!IMPORTANT]
 > Please note that the git commit history might not fully reflect the individual contributions, as we pair programmed using the [VS Code Live Share extension](https://marketplace.visualstudio.com/items/?itemName=MS-vsliveshare.vsliveshare).
 
